@@ -70,7 +70,6 @@ model ChartOfAccount {
 
   // Relations
   journalLines    JournalEntryLine[] @relation("JournalLines")
-  expenses        Expense[]
 
   @@index([type])
   @@index([code])
@@ -201,10 +200,6 @@ model Expense {
   projectId         String?
   project           Project?        @relation(fields: [projectId], references: [id])
 
-  // Link to specific account (e.g., freelancer account, subscription account)
-  accountId         String?
-  account           ChartOfAccount? @relation(fields: [accountId], references: [id])
-
   amount            Decimal         @db.Decimal(15, 2)
   currency          Currency        @default(USD)
   exchangeRate      Decimal         @default(1) @db.Decimal(10, 4)
@@ -238,7 +233,6 @@ model Expense {
 
   @@index([category])
   @@index([projectId])
-  @@index([accountId])
   @@index([expenseDate])
   @@map("expenses")
 }
