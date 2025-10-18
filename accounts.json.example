@@ -1,0 +1,82 @@
+{
+  "chartOfAccounts": [
+    {
+      "section": "ASSETS",
+      "accounts": [
+        {
+          "code": "1000",
+          "name": "Cash & Bank",
+          "type": "ASSET",
+          "isSystem": true,
+          "subaccounts": [
+            { "code": "1001", "name": "PayPal", "type": "ASSET" },
+            { "code": "1002", "name": "Bank Account", "type": "ASSET" }
+          ],
+          "description": "Cash and bank accounts"
+        },
+        {
+          "code": "1100",
+          "name": "Accounts Receivable",
+          "type": "ASSET",
+          "isSystem": true,
+          "description": "Money owed by customers"
+        }
+      ]
+    },
+    {
+      "section": "LIABILITIES",
+      "accounts": [
+        {
+          "code": "2000",
+          "name": "Accounts Payable",
+          "type": "LIABILITY",
+          "isSystem": true,
+          "description": "Money owed to vendors"
+        }
+      ]
+    },
+    {
+      "section": "EQUITY",
+      "accounts": [
+        {
+          "code": "3000",
+          "name": "Owner's Capital",
+          "type": "EQUITY",
+          "isSystem": true,
+          "description": "Initial investment"
+        }
+      ]
+    },
+    {
+      "section": "INCOME",
+      "accounts": [
+        {
+          "code": "4000",
+          "name": "Revenue",
+          "type": "INCOME",
+          "isSystem": true,
+          "description": "Business income"
+        }
+      ]
+    },
+    {
+      "section": "EXPENSES",
+      "accounts": [
+        {
+          "code": "5000",
+          "name": "Cost of Sales",
+          "type": "EXPENSE",
+          "isSystem": true,
+          "description": "Direct costs"
+        },
+        {
+          "code": "5100",
+          "name": "Operating Expenses",
+          "type": "EXPENSE",
+          "isSystem": true,
+          "description": "General business expenses"
+        }
+      ]
+    }
+  ]
+}

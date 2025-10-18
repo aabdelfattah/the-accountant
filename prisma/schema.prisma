@@ -1,0 +1,307 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER MANAGEMENT & AUTHENTICATION
+// ============================================
+
+enum UserRole {
+  ADMIN
+  ACCOUNTANT
+  USER
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  password      String
+  role          UserRole  @default(USER)
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  projects      Project[]
+  revenues      Revenue[]
+  expenses      Expense[]
+
+  @@map("users")
+}
+
+// ============================================
+// CHART OF ACCOUNTS
+// ============================================
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  INCOME
+  EXPENSE
+}
+
+model ChartOfAccount {
+  id              String       @id @default(cuid())
+  code            String       @unique
+  name            String
+  type            AccountType
+  parentId        String?
+  parent          ChartOfAccount?  @relation("AccountHierarchy", fields: [parentId], references: [id])
+  children        ChartOfAccount[] @relation("AccountHierarchy")
+  description     String?
+  active          Boolean      @default(true)
+  isSystem        Boolean      @default(false) // System accounts can't be deleted
+
+  // Balances (computed from journal entries)
+  currentBalance  Decimal      @default(0) @db.Decimal(15, 2)
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  // Relations
+  journalLines    JournalEntryLine[] @relation("JournalLines")
+  expenses        Expense[]
+
+  @@index([type])
+  @@index([code])
+  @@map("chart_of_accounts")
+}
+
+// ============================================
+// PROJECTS
+// ============================================
+
+enum ProjectStatus {
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+model Project {
+  id              String         @id @default(cuid())
+  name            String
+  clientName      String
+  description     String?
+  status          ProjectStatus  @default(ACTIVE)
+  startDate       DateTime?
+  endDate         DateTime?
+
+  userId          String
+  user            User           @relation(fields: [userId], references: [id])
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // Relations
+  revenues        Revenue[]
+  expenses        Expense[]
+  journalEntries  JournalEntry[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("projects")
+}
+
+// ============================================
+// REVENUE
+// ============================================
+
+enum PaymentStatus {
+  UNBILLED      // Not invoiced yet
+  PENDING       // Invoice issued, waiting payment
+  PAID          // Payment received
+  OVERDUE       // Past due date
+}
+
+enum Currency {
+  USD
+  EUR
+  EGP
+  GBP
+  SAR
+  AED
+}
+
+model Revenue {
+  id                String         @id @default(cuid())
+  projectId         String
+  project           Project        @relation(fields: [projectId], references: [id])
+
+  description       String
+  amount            Decimal        @db.Decimal(15, 2)
+  currency          Currency       @default(USD)
+  exchangeRate      Decimal        @default(1) @db.Decimal(10, 4)
+  convertedAmount   Decimal        @db.Decimal(15, 2) // Amount in base currency
+
+  revenueDate       DateTime
+  invoiceDate       DateTime?
+  paymentDate       DateTime?
+  dueDate           DateTime?
+
+  paymentStatus     PaymentStatus  @default(UNBILLED)
+  bankAccount       String?        // e.g., "PayPal 1", "Bank A"
+
+  // Tax information
+  taxAmount         Decimal?       @db.Decimal(15, 2)
+  withholdingAmount Decimal?       @db.Decimal(15, 2)
+
+  userId            String
+  user              User           @relation(fields: [userId], references: [id])
+
+  // Journal entry reference
+  journalEntryId    String?        @unique
+  journalEntry      JournalEntry?  @relation(fields: [journalEntryId], references: [id])
+
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([projectId])
+  @@index([paymentStatus])
+  @@index([revenueDate])
+  @@map("revenues")
+}
+
+// ============================================
+// EXPENSES (Both Project and Non-Project)
+// ============================================
+
+enum ExpenseCategory {
+  // COGS (Cost of Goods Sold) - Project related
+  FREELANCER
+  PROJECT_MANAGEMENT
+
+  // Operating Expenses - Non-project
+  SUBSCRIPTION
+  MARKETING
+  OPERATIONS
+  TRANSACTION_FEE
+  TAX
+  REIMBURSEMENT
+  TRAINING
+  DEPRECIATION
+  OTHER
+}
+
+model Expense {
+  id                String          @id @default(cuid())
+  description       String
+  category          ExpenseCategory
+
+  // Optional project link (for COGS expenses like freelancers)
+  projectId         String?
+  project           Project?        @relation(fields: [projectId], references: [id])
+
+  // Link to specific account (e.g., freelancer account, subscription account)
+  accountId         String?
+  account           ChartOfAccount? @relation(fields: [accountId], references: [id])
+
+  amount            Decimal         @db.Decimal(15, 2)
+  currency          Currency        @default(USD)
+  exchangeRate      Decimal         @default(1) @db.Decimal(10, 4)
+  convertedAmount   Decimal         @db.Decimal(15, 2)
+
+  expenseDate       DateTime
+  invoiceDate       DateTime?
+  paymentDate       DateTime?
+  dueDate           DateTime?
+
+  paymentStatus     PaymentStatus   @default(PAID)
+  bankAccount       String?
+
+  // Tax information
+  taxAmount         Decimal?        @db.Decimal(15, 2)
+  withholdingAmount Decimal?        @db.Decimal(15, 2)
+
+  // For recurring subscriptions
+  isRecurring       Boolean         @default(false)
+  recurringPeriod   String?         // e.g., "monthly", "annual"
+
+  userId            String
+  user              User            @relation(fields: [userId], references: [id])
+
+  // Journal entry reference
+  journalEntryId    String?         @unique
+  journalEntry      JournalEntry?   @relation(fields: [journalEntryId], references: [id])
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([category])
+  @@index([projectId])
+  @@index([accountId])
+  @@index([expenseDate])
+  @@map("expenses")
+}
+
+// ============================================
+// JOURNAL ENTRIES (Double-Entry Bookkeeping)
+// ============================================
+
+enum JournalEntrySource {
+  MANUAL
+  REVENUE
+  EXPENSE
+  SYSTEM
+}
+
+model JournalEntry {
+  id              String              @id @default(cuid())
+  entryNumber     String              @unique
+  date            DateTime
+  description     String
+  source          JournalEntrySource  @default(MANUAL)
+
+  // Optional references to source transactions
+  projectId       String?
+  project         Project?            @relation(fields: [projectId], references: [id])
+
+  revenue         Revenue?
+  expense         Expense?
+
+  // Status
+  posted          Boolean             @default(true)
+  reversed        Boolean             @default(false)
+  reversalId      String?             @unique
+  reversalEntry   JournalEntry?       @relation("Reversal", fields: [reversalId], references: [id])
+  reversedBy      JournalEntry?       @relation("Reversal")
+
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  // Lines (debits and credits)
+  lines           JournalEntryLine[]
+
+  @@index([date])
+  @@index([source])
+  @@map("journal_entries")
+}
+
+model JournalEntryLine {
+  id              String         @id @default(cuid())
+
+  journalEntryId  String
+  journalEntry    JournalEntry   @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+
+  accountId       String
+  account         ChartOfAccount   @relation("JournalLines", fields: [accountId], references: [id])
+  description     String?
+
+  debitAmount     Decimal        @default(0) @db.Decimal(15, 2)
+  creditAmount    Decimal        @default(0) @db.Decimal(15, 2)
+
+  createdAt       DateTime       @default(now())
+
+  @@index([journalEntryId])
+  @@index([accountId])
+  @@map("journal_entry_lines")
+}
