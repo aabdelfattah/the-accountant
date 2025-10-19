@@ -13,13 +13,11 @@ import {
   Settings,
   Users,
 } from 'lucide-react';
-import { UserRole } from '@prisma/client';
-
 interface NavItem {
   title: string;
   href: string;
   icon: any;
-  roles: UserRole[];
+  roles: string[];
 }
 
 const navItems: NavItem[] = [
@@ -81,7 +79,7 @@ const navItems: NavItem[] = [
 
 interface DashboardNavProps {
   user: {
-    role: UserRole;
+    role: string;
   };
 }
 

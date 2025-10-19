@@ -23,7 +23,8 @@ See [plan.md](./plan.md) for the complete implementation roadmap.
 ## Tech Stack
 
 - **Frontend & Backend**: Next.js 14+ (App Router) with TypeScript
-- **Database**: PostgreSQL with Prisma ORM
+- **Database**: MongoDB with Prisma ORM + Mongoose
+- **Accounting Engine**: Medici (double-entry bookkeeping)
 - **Authentication**: NextAuth.js v5
 - **UI Components**: shadcn/ui + Radix UI + Tailwind CSS
 - **State Management**: React Context + Zustand
@@ -33,7 +34,7 @@ See [plan.md](./plan.md) for the complete implementation roadmap.
 ### Prerequisites
 
 - Node.js 18+ and npm
-- PostgreSQL 14+
+- MongoDB 6+ with Replica Set enabled
 
 ### Installation
 
@@ -55,9 +56,18 @@ cp .env.example .env
 
 Edit `.env` and update:
 ```env
-DATABASE_URL="postgresql://user:password@localhost:5432/accountant?schema=public"
+DATABASE_URL="mongodb://localhost:27017/accountant?replicaSet=rs0"
 NEXTAUTH_URL="http://localhost:3000"
 NEXTAUTH_SECRET="your-secret-key-generate-new-one"
+```
+
+**Important**: MongoDB must be running with replica set enabled. To set up a local replica set:
+```bash
+# Start MongoDB with replica set
+mongod --replSet rs0 --dbpath /path/to/data
+
+# In another terminal, initialize the replica set
+mongosh --eval "rs.initiate()"
 ```
 
 To generate a secure secret for `NEXTAUTH_SECRET`:

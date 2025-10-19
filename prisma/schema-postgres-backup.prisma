@@ -1,5 +1,5 @@
-// MongoDB-compatible Prisma schema for The Accountant
-// Compatible with Medici for double-entry accounting
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
@@ -14,12 +14,18 @@ datasource db {
 // USER MANAGEMENT & AUTHENTICATION
 // ============================================
 
+enum UserRole {
+  ADMIN
+  ACCOUNTANT
+  USER
+}
+
 model User {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
   email         String    @unique
   name          String
   password      String
-  role          String    @default("USER") // ADMIN, ACCOUNTANT, USER
+  role          UserRole  @default(USER)
   active        Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -36,26 +42,37 @@ model User {
 // CHART OF ACCOUNTS
 // ============================================
 
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  INCOME
+  EXPENSE
+}
+
 model ChartOfAccount {
-  id              String             @id @default(auto()) @map("_id") @db.ObjectId
-  code            String             @unique
+  id              String       @id @default(cuid())
+  code            String       @unique
   name            String
-  type            String             // ASSET, LIABILITY, EQUITY, INCOME, EXPENSE
-  parentId        String?            @db.ObjectId
-  parent          ChartOfAccount?    @relation("AccountHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  children        ChartOfAccount[]   @relation("AccountHierarchy")
+  type            AccountType
+  parentId        String?
+  parent          ChartOfAccount?  @relation("AccountHierarchy", fields: [parentId], references: [id])
+  children        ChartOfAccount[] @relation("AccountHierarchy")
   description     String?
-  active          Boolean            @default(true)
-  isSystem        Boolean            @default(false)
+  active          Boolean      @default(true)
+  isSystem        Boolean      @default(false) // System accounts can't be deleted
 
-  currentBalance  Float              @default(0)
+  // Balances (computed from journal entries)
+  currentBalance  Decimal      @default(0) @db.Decimal(15, 2)
 
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
   // Relations
-  journalLines    JournalEntryLine[]
+  journalLines    JournalEntryLine[] @relation("JournalLines")
 
+  @@index([type])
+  @@index([code])
   @@map("chart_of_accounts")
 }
 
@@ -63,16 +80,22 @@ model ChartOfAccount {
 // PROJECTS
 // ============================================
 
+enum ProjectStatus {
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
 model Project {
-  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  id              String         @id @default(cuid())
   name            String
   clientName      String
   description     String?
-  status          String         @default("ACTIVE") // ACTIVE, COMPLETED, ARCHIVED
+  status          ProjectStatus  @default(ACTIVE)
   startDate       DateTime?
   endDate         DateTime?
 
-  userId          String         @db.ObjectId
+  userId          String
   user            User           @relation(fields: [userId], references: [id])
 
   createdAt       DateTime       @default(now())
@@ -83,6 +106,8 @@ model Project {
   expenses        Expense[]
   journalEntries  JournalEntry[]
 
+  @@index([userId])
+  @@index([status])
   @@map("projects")
 }
 
@@ -90,39 +115,58 @@ model Project {
 // REVENUE
 // ============================================
 
+enum PaymentStatus {
+  UNBILLED      // Not invoiced yet
+  PENDING       // Invoice issued, waiting payment
+  PAID          // Payment received
+  OVERDUE       // Past due date
+}
+
+enum Currency {
+  USD
+  EUR
+  EGP
+  GBP
+  SAR
+  AED
+}
+
 model Revenue {
-  id                String         @id @default(auto()) @map("_id") @db.ObjectId
-  projectId         String         @db.ObjectId
+  id                String         @id @default(cuid())
+  projectId         String
   project           Project        @relation(fields: [projectId], references: [id])
 
   description       String
-  amount            Float
-  currency          String         @default("USD") // USD, EUR, EGP, GBP, SAR, AED
-  exchangeRate      Float          @default(1)
-  convertedAmount   Float
+  amount            Decimal        @db.Decimal(15, 2)
+  currency          Currency       @default(USD)
+  exchangeRate      Decimal        @default(1) @db.Decimal(10, 4)
+  convertedAmount   Decimal        @db.Decimal(15, 2) // Amount in base currency
 
   revenueDate       DateTime
   invoiceDate       DateTime?
   paymentDate       DateTime?
   dueDate           DateTime?
 
-  paymentStatus     String         @default("UNBILLED") // UNBILLED, PENDING, PAID, OVERDUE
-  bankAccount       String?
+  paymentStatus     PaymentStatus  @default(UNBILLED)
+  bankAccount       String?        // e.g., "PayPal 1", "Bank A"
 
   // Tax information
-  taxAmount         Float?
-  withholdingAmount Float?
+  taxAmount         Decimal?       @db.Decimal(15, 2)
+  withholdingAmount Decimal?       @db.Decimal(15, 2)
 
-  userId            String         @db.ObjectId
+  userId            String
   user              User           @relation(fields: [userId], references: [id])
 
   // Journal entry reference
-  journalEntryId    String?        @unique @db.ObjectId
+  journalEntryId    String?        @unique
   journalEntry      JournalEntry?  @relation(fields: [journalEntryId], references: [id])
 
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
 
+  @@index([projectId])
+  @@index([paymentStatus])
+  @@index([revenueDate])
   @@map("revenues")
 }
 
@@ -130,64 +174,89 @@ model Revenue {
 // EXPENSES (Both Project and Non-Project)
 // ============================================
 
+enum ExpenseCategory {
+  // COGS (Cost of Goods Sold) - Project related
+  FREELANCER
+  PROJECT_MANAGEMENT
+
+  // Operating Expenses - Non-project
+  SUBSCRIPTION
+  MARKETING
+  OPERATIONS
+  TRANSACTION_FEE
+  TAX
+  REIMBURSEMENT
+  TRAINING
+  DEPRECIATION
+  OTHER
+}
+
 model Expense {
-  id                String          @id @default(auto()) @map("_id") @db.ObjectId
+  id                String          @id @default(cuid())
   description       String
-  category          String          // FREELANCER, SUBSCRIPTION, MARKETING, OPERATIONS, etc.
+  category          ExpenseCategory
 
   // Optional project link (for COGS expenses like freelancers)
-  projectId         String?         @db.ObjectId
+  projectId         String?
   project           Project?        @relation(fields: [projectId], references: [id])
 
-  amount            Float
-  currency          String          @default("USD")
-  exchangeRate      Float           @default(1)
-  convertedAmount   Float
+  amount            Decimal         @db.Decimal(15, 2)
+  currency          Currency        @default(USD)
+  exchangeRate      Decimal         @default(1) @db.Decimal(10, 4)
+  convertedAmount   Decimal         @db.Decimal(15, 2)
 
   expenseDate       DateTime
   invoiceDate       DateTime?
   paymentDate       DateTime?
   dueDate           DateTime?
 
-  paymentStatus     String          @default("PAID")
+  paymentStatus     PaymentStatus   @default(PAID)
   bankAccount       String?
 
   // Tax information
-  taxAmount         Float?
-  withholdingAmount Float?
+  taxAmount         Decimal?        @db.Decimal(15, 2)
+  withholdingAmount Decimal?        @db.Decimal(15, 2)
 
   // For recurring subscriptions
   isRecurring       Boolean         @default(false)
-  recurringPeriod   String?
+  recurringPeriod   String?         // e.g., "monthly", "annual"
 
-  userId            String          @db.ObjectId
+  userId            String
   user              User            @relation(fields: [userId], references: [id])
 
   // Journal entry reference
-  journalEntryId    String?         @unique @db.ObjectId
+  journalEntryId    String?         @unique
   journalEntry      JournalEntry?   @relation(fields: [journalEntryId], references: [id])
 
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 
+  @@index([category])
+  @@index([projectId])
+  @@index([expenseDate])
   @@map("expenses")
 }
 
 // ============================================
 // JOURNAL ENTRIES (Double-Entry Bookkeeping)
-// Note: We'll use Medici for actual journal entries
-// These are just references to Medici entries
 // ============================================
 
+enum JournalEntrySource {
+  MANUAL
+  REVENUE
+  EXPENSE
+  SYSTEM
+}
+
 model JournalEntry {
-  id              String              @id @default(auto()) @map("_id") @db.ObjectId
+  id              String              @id @default(cuid())
   entryNumber     String              @unique
   date            DateTime
   description     String
-  source          String              @default("MANUAL") // MANUAL, REVENUE, EXPENSE, SYSTEM
+  source          JournalEntrySource  @default(MANUAL)
 
   // Optional references to source transactions
-  projectId       String?             @db.ObjectId
+  projectId       String?
   project         Project?            @relation(fields: [projectId], references: [id])
 
   revenue         Revenue?
@@ -196,12 +265,9 @@ model JournalEntry {
   // Status
   posted          Boolean             @default(true)
   reversed        Boolean             @default(false)
-  reversalId      String?             @unique @db.ObjectId
-  reversalEntry   JournalEntry?       @relation("Reversal", fields: [reversalId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  reversalId      String?             @unique
+  reversalEntry   JournalEntry?       @relation("Reversal", fields: [reversalId], references: [id])
   reversedBy      JournalEntry?       @relation("Reversal")
-
-  // Medici journal entry ID reference
-  mediciJournalId String?
 
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
@@ -209,23 +275,27 @@ model JournalEntry {
   // Lines (debits and credits)
   lines           JournalEntryLine[]
 
+  @@index([date])
+  @@index([source])
   @@map("journal_entries")
 }
 
 model JournalEntryLine {
-  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  id              String         @id @default(cuid())
 
-  journalEntryId  String         @db.ObjectId
+  journalEntryId  String
   journalEntry    JournalEntry   @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
 
-  accountId       String         @db.ObjectId
-  account         ChartOfAccount @relation(fields: [accountId], references: [id])
+  accountId       String
+  account         ChartOfAccount   @relation("JournalLines", fields: [accountId], references: [id])
   description     String?
 
-  debitAmount     Float          @default(0)
-  creditAmount    Float          @default(0)
+  debitAmount     Decimal        @default(0) @db.Decimal(15, 2)
+  creditAmount    Decimal        @default(0) @db.Decimal(15, 2)
 
   createdAt       DateTime       @default(now())
 
+  @@index([journalEntryId])
+  @@index([accountId])
   @@map("journal_entry_lines")
 }

@@ -1,4 +1,4 @@
-import { PrismaClient, AccountType, UserRole } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import fs from 'fs';
 import path from 'path';
@@ -34,7 +34,7 @@ async function main() {
       email: 'admin@transverse.me',
       name: 'Admin User',
       password: hashedPassword,
-      role: UserRole.ADMIN,
+      role: 'ADMIN',
     },
   });
 
@@ -48,7 +48,7 @@ async function main() {
       email: 'accountant@transverse.me',
       name: 'Accountant User',
       password: await bcrypt.hash('accountant123', 10),
-      role: UserRole.ACCOUNTANT,
+      role: 'ACCOUNTANT',
     },
   });
 
@@ -62,7 +62,7 @@ async function main() {
       email: 'user@transverse.me',
       name: 'Regular User',
       password: await bcrypt.hash('user123', 10),
-      role: UserRole.USER,
+      role: 'USER',
     },
   });
 
@@ -91,7 +91,7 @@ async function main() {
         create: {
           code: account.code,
           name: account.name,
-          type: account.type as AccountType,
+          type: account.type,
           isSystem: account.isSystem || false,
           description: account.description,
         },
@@ -108,7 +108,7 @@ async function main() {
             create: {
               code: subaccount.code,
               name: subaccount.name,
-              type: subaccount.type as AccountType,
+              type: subaccount.type,
               parentId: parentAccount.id,
               isSystem: subaccount.isSystem || false,
             },

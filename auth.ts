@@ -4,7 +4,6 @@ import Credentials from 'next-auth/providers/credentials';
 import { prisma } from './lib/prisma';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-import { UserRole } from '@prisma/client';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -49,21 +48,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
 declare module 'next-auth' {
   interface User {
-    role: UserRole;
+    role: string;
   }
   interface Session {
     user: {
       id: string;
       email: string;
       name: string;
-      role: UserRole;
+      role: string;
     };
   }
 }
 
 declare module '@auth/core/jwt' {
   interface JWT {
-    role: UserRole;
+    role: string;
     id: string;
   }
 }
