@@ -11,10 +11,12 @@ A modern accounting management system for project-based businesses with:
 ## Technology Stack
 
 - **Frontend & Backend**: Next.js 14+ (App Router) with TypeScript
-- **Database**: PostgreSQL with Prisma ORM
+- **Database**: MongoDB Atlas with Prisma ORM + Mongoose
+- **Accounting Engine**: Medici (double-entry bookkeeping library)
 - **Authentication**: NextAuth.js v5
 - **UI**: shadcn/ui + Radix UI + Tailwind CSS
 - **State Management**: React Context + Zustand
+- **Deployment**: Railway (App) + MongoDB Atlas (Database)
 
 ---
 
@@ -24,23 +26,29 @@ A modern accounting management system for project-based businesses with:
 
 **Development:**
 - [x] Initialize Next.js project with TypeScript
-- [x] Setup PostgreSQL database configuration
-- [x] Configure Prisma ORM with comprehensive schema
+- [x] Setup MongoDB Atlas database configuration
+- [x] Configure Prisma ORM with MongoDB-compatible schema
 - [x] Install and configure UI libraries (shadcn/ui, Tailwind CSS)
-- [x] Create accounts.json with complete chart of accounts
+- [x] Create accounts.json with complete chart of accounts (72 accounts)
 - [x] Create seed script to populate database
+- [x] Migrate from PostgreSQL to MongoDB for Medici compatibility
+- [x] Install Medici (v7.2.0) and Mongoose (v8.19.1) packages
+- [x] Fix MongoDB connection string handling for Railway
 
 **Testing:**
 - [x] Verify `npm install` completes successfully
 - [x] Verify `npm run build` compiles without errors
-- [x] Test database connection
-- [x] Test seed script execution
+- [x] Test database connection (local MongoDB + Atlas)
+- [x] Test seed script execution (72 accounts + 3 users created)
+- [x] Verify production deployment on Railway
+- [x] Test production database seeding on Atlas
 
 **Files Created:**
 - Configuration files (package.json, tsconfig.json, tailwind.config.ts, etc.)
-- prisma/schema.prisma, prisma/seed.ts
-- accounts.json, lib/prisma.ts, lib/utils.ts
-- README.md, .env.example
+- prisma/schema.prisma (MongoDB), prisma/schema-postgres-backup.prisma
+- prisma/seed.ts, accounts.json
+- lib/prisma.ts (with MongoDB URL fix), lib/utils.ts
+- README.md (updated for MongoDB), .env.example
 
 ---
 
@@ -55,9 +63,9 @@ A modern accounting management system for project-based businesses with:
 
 **Testing:**
 - [x] Build check: `npm run build` (no TypeScript errors)
-- [ ] **TODO**: Test login with all 3 user roles
-- [ ] **TODO**: Test protected route redirection
-- [ ] **TODO**: Test logout functionality
+- [x] Test login on production (admin@transverse.me)
+- [x] Test protected route redirection
+- [x] Verify role-based access control works
 
 **Files Created:**
 - auth.config.ts, auth.ts, middleware.ts
@@ -80,10 +88,11 @@ A modern accounting management system for project-based businesses with:
 - [x] Dashboard home page with quick links
 
 **Testing:**
-- [ ] **TODO**: `npm run build` - verify no errors
+- [x] `npm run build` - verify no errors
+- [x] Test dashboard loads in production
+- [x] Verify navigation is visible and functional
 - [ ] **TODO**: Test navigation visibility for each role
 - [ ] **TODO**: Test responsive design on mobile
-- [ ] **TODO**: Verify dashboard loads for all user types
 
 **Files Created:**
 - app/dashboard/layout.tsx, app/dashboard/page.tsx
@@ -91,9 +100,77 @@ A modern accounting management system for project-based businesses with:
 
 ---
 
+### ✅ Phase 3.5: Production Deployment (COMPLETED)
+
+**Development:**
+- [x] Deploy application to Railway
+- [x] Configure MongoDB Atlas (M0 Free Tier)
+- [x] Set up environment variables in Railway
+- [x] Fix AUTH_TRUST_HOST for NextAuth production
+- [x] Handle Railway MongoDB space limitations
+- [x] Configure DATABASE_URL with Atlas connection string
+- [x] Deploy and verify application is live
+
+**Testing:**
+- [x] Test production database connection
+- [x] Push Prisma schema to Atlas
+- [x] Seed production database successfully
+- [x] Test production login at the-accountant-production.up.railway.app
+- [x] Verify all environment variables are set correctly
+- [x] Check application logs for errors
+
+**Production Info:**
+- **URL**: https://the-accountant-production.up.railway.app
+- **Database**: MongoDB Atlas (M0 Free - 512MB)
+- **Deployment Platform**: Railway
+- **Status**: ✅ Live and Working
+
+---
+
+## 🔨 Current Work
+
+### Phase 4: Medici Integration (IN PROGRESS)
+
+**Priority: CRITICAL** (Foundation for Double-Entry Accounting)
+
+Medici is a Node.js library that provides a simple interface for double-entry accounting. It handles:
+- Creating journal entries with debits and credits
+- Maintaining account balances
+- Querying transaction history
+- Balance verification
+
+**Development Tasks:**
+- [ ] Set up Mongoose connection alongside Prisma
+- [ ] Define Medici schema and models
+- [ ] Create Medici service wrapper
+- [ ] Integrate Medici with existing Chart of Accounts
+- [ ] Create helper functions for common journal entries
+- [ ] Test basic journal entry creation
+- [ ] Test balance queries
+- [ ] Document Medici integration patterns
+
+**Testing Tasks:**
+- [ ] Test Mongoose connection to MongoDB
+- [ ] Test journal entry creation
+- [ ] Test debit/credit balance verification
+- [ ] Test querying account balances
+- [ ] Test transaction history queries
+- [ ] Integration test with existing schema
+
+**Estimated Time:** 4-5 hours
+
+**Files to Create:**
+- `lib/medici/connection.ts` - Mongoose connection setup
+- `lib/medici/models.ts` - Medici model definitions
+- `lib/medici/service.ts` - Medici wrapper service
+- `lib/medici/helpers.ts` - Journal entry helpers
+- `__tests__/lib/medici/service.test.ts`
+
+---
+
 ## 🔨 Remaining Work
 
-### Phase 4: Admin Panel (User Management)
+### Phase 5: Admin Panel (User Management)
 
 **Priority: HIGH**
 
@@ -124,7 +201,7 @@ A modern accounting management system for project-based businesses with:
 
 ---
 
-### Phase 5: Chart of Accounts Management
+### Phase 6: Chart of Accounts Management
 
 **Priority: HIGH** (Accountant Feature)
 
@@ -157,7 +234,7 @@ A modern accounting management system for project-based businesses with:
 
 ---
 
-### Phase 6: Projects Module
+### Phase 7: Projects Module
 
 **Priority: HIGH** (Core Feature)
 
@@ -190,7 +267,7 @@ A modern accounting management system for project-based businesses with:
 
 ---
 
-### Phase 7: Revenue Entry
+### Phase 8: Revenue Entry
 
 **Priority: HIGH** (Core Feature)
 
@@ -228,7 +305,7 @@ A modern accounting management system for project-based businesses with:
 
 ---
 
-### Phase 8: Expense Entry
+### Phase 9: Expense Entry
 
 **Priority: HIGH** (Core Feature)
 
@@ -267,7 +344,7 @@ A modern accounting management system for project-based businesses with:
 
 ---
 
-### Phase 9: Accounting Engine
+### Phase 10: Accounting Engine
 
 **Priority: CRITICAL** (Core Logic)
 
@@ -332,7 +409,7 @@ This is the heart of the system - automatically generates journal entries from u
 
 ---
 
-### Phase 10: Journal Entries UI
+### Phase 11: Journal Entries UI
 
 **Priority: MEDIUM** (Accountant Feature)
 
@@ -368,7 +445,7 @@ This is the heart of the system - automatically generates journal entries from u
 
 ---
 
-### Phase 11: Financial Reports
+### Phase 12: Financial Reports
 
 **Priority: MEDIUM** (Accountant Feature)
 
@@ -421,7 +498,7 @@ This is the heart of the system - automatically generates journal entries from u
 
 ---
 
-### Phase 12: End-to-End Testing & Refinement
+### Phase 13: End-to-End Testing & Refinement
 
 **Priority: MEDIUM**
 
@@ -462,31 +539,24 @@ This is the heart of the system - automatically generates journal entries from u
 
 ---
 
-### Phase 13: Deployment & Documentation
+### Phase 14: Documentation & Additional Features
 
 **Priority: LOW**
 
 **Development Tasks:**
-- [ ] Setup production database (PostgreSQL)
-- [ ] Configure environment variables for production
-- [ ] Deploy to Vercel/Railway/AWS
+- [x] Setup production database (MongoDB Atlas)
+- [x] Configure environment variables for production
+- [x] Deploy to Railway
 - [ ] Setup automatic backups
 - [ ] Configure monitoring and logging
-
-**Testing Tasks:**
-- [ ] Test production deployment
-- [ ] Verify database migrations
-- [ ] Test with production data
-- [ ] Load testing
-- [ ] Verify all environment variables
-- [ ] Test backup and restore procedures
+- [ ] Add error tracking (Sentry)
 
 **Documentation Tasks:**
 - [ ] User guide (PDF/video)
 - [ ] Admin guide
 - [ ] Accounting procedures documentation
 - [ ] API documentation
-- [ ] Deployment guide
+- [ ] Contributing guide
 
 **Estimated Time:** 3-4 hours
 
@@ -525,35 +595,48 @@ npm run lint
 
 ## Timeline Estimate
 
-- **Completed**: ~12 hours (Phases 1-3)
-- **Remaining**: ~45-55 hours (Phases 4-13, including testing)
-- **Total Project**: ~60-70 hours
+- **Completed**: ~18 hours (Phases 1-3.5)
+  - Phase 1: Project Setup & MongoDB Migration - 6 hours
+  - Phase 2: Authentication - 4 hours
+  - Phase 3: Dashboard - 3 hours
+  - Phase 3.5: Production Deployment - 5 hours
+- **In Progress**: Phase 4 (Medici Integration) - 4-5 hours
+- **Remaining**: ~40-50 hours (Phases 5-14, including testing)
+- **Total Project**: ~60-75 hours
 
 ## Priority Order for Next Steps
 
-1. **Accounting Engine** (Phase 9) - Core business logic with comprehensive tests
-2. **Projects Module** (Phase 6) - Required for revenues/expenses
-3. **Revenue Entry** (Phase 7) - Core feature
-4. **Expense Entry** (Phase 8) - Core feature
-5. **Chart of Accounts UI** (Phase 5) - Accountant needs
-6. **Journal Entries UI** (Phase 10) - Verify accounting logic visually
-7. **Admin Panel** (Phase 4) - User management
-8. **Financial Reports** (Phase 11) - Business value
-9. **E2E Testing** (Phase 12) - Quality assurance
-10. **Deployment** (Phase 13) - Production ready
+1. **✅ Medici Integration** (Phase 4) - IN PROGRESS - Foundation for double-entry
+2. **Accounting Engine** (Phase 10) - Core business logic with comprehensive tests
+3. **Projects Module** (Phase 7) - Required for revenues/expenses
+4. **Revenue Entry** (Phase 8) - Core feature
+5. **Expense Entry** (Phase 9) - Core feature
+6. **Chart of Accounts UI** (Phase 6) - Accountant needs
+7. **Journal Entries UI** (Phase 11) - Verify accounting logic visually
+8. **Admin Panel** (Phase 5) - User management
+9. **Financial Reports** (Phase 12) - Business value
+10. **E2E Testing** (Phase 13) - Quality assurance
+11. **Documentation** (Phase 14) - Final polish
 
 ---
 
 ## Database Setup Instructions
 
-1. Install PostgreSQL and create a database:
+### Local Development
+
+1. Install MongoDB with replica set:
 ```bash
-createdb accountant
+# macOS
+brew install mongodb-community
+mongod --replSet rs0 --dbpath /path/to/data
+
+# In another terminal, initialize replica set
+mongosh --eval "rs.initiate()"
 ```
 
 2. Update `.env` file with your database URL:
 ```
-DATABASE_URL="postgresql://user:password@localhost:5432/accountant?schema=public"
+DATABASE_URL="mongodb://localhost:27017/accountant?replicaSet=rs0"
 ```
 
 3. Push the schema and seed:
@@ -566,6 +649,14 @@ npm run db:seed
 ```bash
 npm run db:studio
 ```
+
+### Production (MongoDB Atlas)
+
+1. Create free M0 cluster at https://www.mongodb.com/cloud/atlas
+2. Configure database access and network access
+3. Get connection string with `/accountant` database name
+4. Update Railway environment variables
+5. Deploy and seed production database
 
 ---
 
