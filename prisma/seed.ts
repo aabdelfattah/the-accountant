@@ -120,9 +120,62 @@ async function main() {
     }
   }
 
+  // ============================================
+  // SAMPLE JOURNAL ENTRIES using Medici
+  // ============================================
+
+  console.log('\nCreating sample journal entries with Medici...');
+
+  const { createEntry } = await import('../lib/medici');
+
+  // Entry 1: Initial capital investment
+  await createEntry({
+    memo: 'Initial capital investment by owners',
+    date: new Date('2024-01-01'),
+    transactions: [
+      { type: 'debit', accountCode: '1000', amount: 50000 }, // Cash
+      { type: 'credit', accountCode: '3000', amount: 50000 }, // Owner's Capital
+    ],
+  });
+  console.log('  ✓ Initial capital investment: $50,000');
+
+  // Entry 2: Client payment received
+  await createEntry({
+    memo: 'Payment received from Transperfect',
+    date: new Date('2024-01-15'),
+    transactions: [
+      { type: 'debit', accountCode: '1001', amount: 5000 }, // PayPal
+      { type: 'credit', accountCode: '4001', amount: 5000 }, // Translation Revenue
+    ],
+  });
+  console.log('  ✓ Revenue from Transperfect: $5,000');
+
+  // Entry 3: Freelancer payment
+  await createEntry({
+    memo: 'Payment to freelancer for translation work',
+    date: new Date('2024-01-20'),
+    transactions: [
+      { type: 'debit', accountCode: '5001', amount: 2000 }, // Freelancers cost
+      { type: 'credit', accountCode: '1001', amount: 2000 }, // PayPal
+    ],
+  });
+  console.log('  ✓ Freelancer payment: $2,000');
+
+  // Entry 4: Subscription expense
+  await createEntry({
+    memo: 'Monthly Canva subscription',
+    date: new Date('2024-01-25'),
+    transactions: [
+      { type: 'debit', accountCode: '5102', amount: 120 }, // Canva
+      { type: 'credit', accountCode: '1002', amount: 120 }, // Bank
+    ],
+  });
+  console.log('  ✓ Canva subscription: $120');
+
   console.log(`\n✅ Seed completed successfully!`);
   console.log(`   - Created ${accountMap.size} accounts`);
   console.log(`   - Created 3 users (admin, accountant, user)`);
+  console.log(`   - Created 4 sample journal entries`);
 }
 
 main()

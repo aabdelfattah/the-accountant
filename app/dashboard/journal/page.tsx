@@ -1,6 +1,9 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
+import { getBook } from '@/lib/medici/book';
+import { formatDistanceToNow } from 'date-fns';
 
 export default async function JournalPage() {
   const session = await auth();
@@ -10,32 +13,104 @@ export default async function JournalPage() {
     redirect('/dashboard');
   }
 
+  // Fetch journal entries from Medici
+  const book = await getBook();
+  const ledgerData = await book.ledger({});
+  const entries = ledgerData.results || [];
+
+  // Group by journal entry ID
+  const journalEntries = new Map();
+
+  entries.forEach((entry: any) => {
+    const journalId = entry._journal_id.toString();
+    if (!journalEntries.has(journalId)) {
+      journalEntries.set(journalId, {
+        id: journalId,
+        date: entry.datetime,
+        memo: entry.memo,
+        lines: [],
+      });
+    }
+    journalEntries.get(journalId).lines.push({
+      account: entry.account_path[0],
+      debit: entry.debit,
+      credit: entry.credit,
+    });
+  });
+
+  const sortedEntries = Array.from(journalEntries.values()).sort(
+    (a, b) => b.date.getTime() - a.date.getTime()
+  );
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Journal Entries</h1>
-        <p className="text-muted-foreground">View and manage accounting journal entries</p>
+        <p className="text-muted-foreground">
+          View accounting journal entries ({sortedEntries.length} total)
+        </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Coming Soon</CardTitle>
-          <CardDescription>Journal entries interface will be implemented here</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            This page will allow you to:
-          </p>
-          <ul className="mt-2 space-y-1 text-sm text-muted-foreground list-disc list-inside">
-            <li>View all journal entries (auto-generated and manual)</li>
-            <li>Filter by date range, source, account</li>
-            <li>See debits and credits for each entry</li>
-            <li>Create manual journal entries for adjustments</li>
-            <li>Reverse entries if needed</li>
-            <li>Export to Excel/CSV</li>
-          </ul>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        {sortedEntries.map((entry) => (
+          <Card key={entry.id}>
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="text-lg">{entry.memo}</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {new Date(entry.date).toLocaleDateString()} • {formatDistanceToNow(new Date(entry.date), { addSuffix: true })}
+                  </p>
+                </div>
+                <span className="text-xs text-muted-foreground font-mono">
+                  {entry.id.substring(0, 8)}
+                </span>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Account</TableHead>
+                    <TableHead className="text-right">Debit</TableHead>
+                    <TableHead className="text-right">Credit</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {entry.lines.map((line: any, idx: number) => (
+                    <TableRow key={idx}>
+                      <TableCell className="font-medium">{line.account}</TableCell>
+                      <TableCell className="text-right">
+                        {line.debit > 0 ? `$${line.debit.toLocaleString()}` : '—'}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {line.credit > 0 ? `$${line.credit.toLocaleString()}` : '—'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  <TableRow className="font-semibold bg-muted/50">
+                    <TableCell>Total</TableCell>
+                    <TableCell className="text-right">
+                      ${entry.lines.reduce((sum: number, l: any) => sum + l.debit, 0).toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      ${entry.lines.reduce((sum: number, l: any) => sum + l.credit, 0).toLocaleString()}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        ))}
+
+        {sortedEntries.length === 0 && (
+          <Card>
+            <CardContent className="py-8 text-center text-muted-foreground">
+              No journal entries found. Run the seed script to create sample entries.
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
