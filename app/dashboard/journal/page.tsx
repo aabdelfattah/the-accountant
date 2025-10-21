@@ -16,29 +16,35 @@ export default async function JournalPage() {
   // Fetch journal entries from Medici
   const book = await getBook();
 
-  // Get all journals (not ledger entries)
-  const journals = await book.list({});
+  // Query all transactions and group by journal
+  const ledgerData = await book.ledger({});
+  const entries = ledgerData.results || [];
 
-  // Fetch ledger lines for each journal
-  const journalEntries = await Promise.all(
-    journals.map(async (journal: any) => {
-      const ledger = await book.ledger({ _journal: journal._id });
+  // Group by journal entry
+  const journalMap = new Map<string, any>();
 
-      return {
-        id: journal._id.toString(),
-        date: journal.datetime,
-        memo: journal.memo,
-        lines: ledger.results.map((entry: any) => ({
-          account: entry.account_path.join(':'),
-          debit: entry.debit || 0,
-          credit: entry.credit || 0,
-        })),
-      };
-    })
-  );
+  entries.forEach((entry: any) => {
+    // Use memo + datetime as grouping key since we don't have direct journal ID
+    const key = `${entry.memo}_${entry.datetime.getTime()}`;
 
-  const sortedEntries = journalEntries.sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    if (!journalMap.has(key)) {
+      journalMap.set(key, {
+        id: key,
+        date: entry.datetime,
+        memo: entry.memo,
+        lines: [],
+      });
+    }
+
+    journalMap.get(key)!.lines.push({
+      account: entry.account_path.join(':'),
+      debit: entry.debit || 0,
+      credit: entry.credit || 0,
+    });
+  });
+
+  const sortedEntries = Array.from(journalMap.values()).sort(
+    (a, b) => b.date.getTime() - a.date.getTime()
   );
 
   return (
