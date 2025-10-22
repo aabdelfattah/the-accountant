@@ -39,22 +39,26 @@ See [plan.md](./plan.md) for the complete implementation roadmap.
 ### Installation
 
 1. Clone the repository:
+
 ```bash
 git clone <repository-url>
 cd the-accountant
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 ```
 
 3. Set up environment variables:
+
 ```bash
 cp .env.example .env
 ```
 
 Edit `.env` and update:
+
 ```env
 DATABASE_URL="mongodb://localhost:27017/accountant?replicaSet=rs0"
 NEXTAUTH_URL="http://localhost:3000"
@@ -62,6 +66,7 @@ NEXTAUTH_SECRET="your-secret-key-generate-new-one"
 ```
 
 **Important**: MongoDB must be running with replica set enabled. To set up a local replica set:
+
 ```bash
 # Start MongoDB with replica set
 mongod --replSet rs0 --dbpath /path/to/data
@@ -71,11 +76,13 @@ mongosh --eval "rs.initiate()"
 ```
 
 To generate a secure secret for `NEXTAUTH_SECRET`:
+
 ```bash
 openssl rand -base64 32
 ```
 
 4. Set up your chart of accounts:
+
 ```bash
 # Copy the example file and customize it
 cp accounts.json.example accounts.json
@@ -83,6 +90,7 @@ cp accounts.json.example accounts.json
 ```
 
 5. Set up the database:
+
 ```bash
 # Push the schema to database
 npm run db:push
@@ -92,6 +100,7 @@ npm run db:seed
 ```
 
 6. Start the development server:
+
 ```bash
 npm run dev
 ```
@@ -109,17 +118,20 @@ After seeding, you can log in with these accounts:
 ## User Roles
 
 ### Admin
+
 - Full system access
 - User management (add/remove users, assign roles)
 - Access to all features
 
 ### Accountant
+
 - View and manage chart of accounts
 - Review all journal entries
 - Generate financial reports (Income Statement, Balance Sheet)
 - View all transactions across all projects
 
 ### User
+
 - Create and manage projects
 - Add revenue entries for projects
 - Record expenses (freelancers, subscriptions, etc.)

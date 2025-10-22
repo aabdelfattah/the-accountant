@@ -12,11 +12,13 @@ import {
   FileText,
   Settings,
   Users,
+  type LucideIcon,
 } from 'lucide-react';
+
 interface NavItem {
   title: string;
   href: string;
-  icon: any;
+  icon: LucideIcon;
   roles: string[];
 }
 

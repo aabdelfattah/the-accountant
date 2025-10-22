@@ -3,6 +3,7 @@
 ## Project Overview
 
 A modern accounting management system for project-based businesses with:
+
 - Double-entry bookkeeping
 - Multi-currency support
 - Role-based access control (Admin, Accountant, User)
@@ -25,6 +26,7 @@ A modern accounting management system for project-based businesses with:
 ### ✅ Phase 1: Project Setup & Infrastructure (COMPLETED)
 
 **Development:**
+
 - [x] Initialize Next.js project with TypeScript
 - [x] Setup MongoDB Atlas database configuration
 - [x] Configure Prisma ORM with MongoDB-compatible schema
@@ -36,6 +38,7 @@ A modern accounting management system for project-based businesses with:
 - [x] Fix MongoDB connection string handling for Railway
 
 **Testing:**
+
 - [x] Verify `npm install` completes successfully
 - [x] Verify `npm run build` compiles without errors
 - [x] Test database connection (local MongoDB + Atlas)
@@ -44,6 +47,7 @@ A modern accounting management system for project-based businesses with:
 - [x] Test production database seeding on Atlas
 
 **Files Created:**
+
 - Configuration files (package.json, tsconfig.json, tailwind.config.ts, etc.)
 - prisma/schema.prisma (MongoDB), prisma/schema-postgres-backup.prisma
 - prisma/seed.ts, accounts.json
@@ -55,6 +59,7 @@ A modern accounting management system for project-based businesses with:
 ### ✅ Phase 2: Authentication & User Management (COMPLETED)
 
 **Development:**
+
 - [x] Implement NextAuth.js v5 authentication
 - [x] Create login/logout functionality
 - [x] Setup role-based access control
@@ -62,17 +67,20 @@ A modern accounting management system for project-based businesses with:
 - [x] Login page with form validation
 
 **Testing:**
+
 - [x] Build check: `npm run build` (no TypeScript errors)
 - [x] Test login on production (admin@transverse.me)
 - [x] Test protected route redirection
 - [x] Verify role-based access control works
 
 **Files Created:**
+
 - auth.config.ts, auth.ts, middleware.ts
 - app/api/auth/[...nextauth]/route.ts
 - app/login/page.tsx, components/auth/login-form.tsx
 
 **Default Users (after seeding):**
+
 - Admin: admin@transverse.me / admin123
 - Accountant: accountant@transverse.me / accountant123
 - User: user@transverse.me / user123
@@ -82,12 +90,14 @@ A modern accounting management system for project-based businesses with:
 ### ✅ Phase 3: Dashboard & Navigation (COMPLETED)
 
 **Development:**
+
 - [x] Create dashboard layout with sidebar
 - [x] Implement role-based navigation
 - [x] User profile dropdown
 - [x] Dashboard home page with quick links
 
 **Testing:**
+
 - [x] `npm run build` - verify no errors
 - [x] Test dashboard loads in production
 - [x] Verify navigation is visible and functional
@@ -95,6 +105,7 @@ A modern accounting management system for project-based businesses with:
 - [ ] **TODO**: Test responsive design on mobile
 
 **Files Created:**
+
 - app/dashboard/layout.tsx, app/dashboard/page.tsx
 - components/dashboard/nav.tsx, components/dashboard/user-nav.tsx
 
@@ -103,6 +114,7 @@ A modern accounting management system for project-based businesses with:
 ### ✅ Phase 3.5: Production Deployment (COMPLETED)
 
 **Development:**
+
 - [x] Deploy application to Railway
 - [x] Configure MongoDB Atlas (M0 Free Tier)
 - [x] Set up environment variables in Railway
@@ -112,6 +124,7 @@ A modern accounting management system for project-based businesses with:
 - [x] Deploy and verify application is live
 
 **Testing:**
+
 - [x] Test production database connection
 - [x] Push Prisma schema to Atlas
 - [x] Seed production database successfully
@@ -120,6 +133,7 @@ A modern accounting management system for project-based businesses with:
 - [x] Check application logs for errors
 
 **Production Info:**
+
 - **URL**: https://the-accountant-production.up.railway.app
 - **Database**: MongoDB Atlas (M0 Free - 512MB)
 - **Deployment Platform**: Railway
@@ -132,12 +146,14 @@ A modern accounting management system for project-based businesses with:
 **Priority: CRITICAL** (Foundation for Double-Entry Accounting)
 
 Medici is a Node.js library that provides a simple interface for double-entry accounting. It handles:
+
 - Creating journal entries with debits and credits
 - Maintaining account balances
 - Querying transaction history
 - Balance verification
 
 **Development Tasks:**
+
 - [x] Set up unified database connection manager (Prisma + Mongoose)
 - [x] Create Medici book wrapper with helper functions
 - [x] Build Medici service layer integrated with Chart of Accounts
@@ -146,6 +162,7 @@ Medici is a Node.js library that provides a simple interface for double-entry ac
 - [x] Verify build succeeds without errors
 
 **Testing Results:**
+
 - [x] Mongoose connects successfully to MongoDB
 - [x] Journal entries created correctly (tested with $1000 Cash → Revenue)
 - [x] Account balances query working (Cash: -1000, Revenue: 1000)
@@ -153,6 +170,7 @@ Medici is a Node.js library that provides a simple interface for double-entry ac
 - [x] Next.js build successful
 
 **Files Created:**
+
 - `lib/db.ts` - Unified database connection manager
 - `lib/medici/book.ts` - Medici book and journal entry helpers
 - `lib/medici/service.ts` - Service layer with Chart of Accounts integration
@@ -169,6 +187,7 @@ Medici is a Node.js library that provides a simple interface for double-entry ac
 **Priority: HIGH**
 
 **Development Tasks:**
+
 - [ ] Create user management page
 - [ ] List all users with role badges
 - [ ] Add new user form with validation
@@ -177,6 +196,7 @@ Medici is a Node.js library that provides a simple interface for double-entry ac
 - [ ] Role assignment
 
 **Testing Tasks:**
+
 - [ ] `npm run build` - verify compilation
 - [ ] Test CRUD operations for users
 - [ ] Test role-based access (only admin can access)
@@ -187,6 +207,7 @@ Medici is a Node.js library that provides a simple interface for double-entry ac
 **Estimated Time:** 3-4 hours (including tests)
 
 **Files to Create:**
+
 - `app/dashboard/admin/users/page.tsx`
 - `components/admin/user-list.tsx`
 - `components/admin/user-form.tsx`
@@ -200,6 +221,7 @@ Medici is a Node.js library that provides a simple interface for double-entry ac
 **Priority: HIGH** (Accountant Feature)
 
 **Development Tasks:**
+
 - [ ] Display chart of accounts in hierarchical table
 - [ ] Add new accounts with parent selection
 - [ ] Edit account details
@@ -208,6 +230,7 @@ Medici is a Node.js library that provides a simple interface for double-entry ac
 - [ ] Search and filter functionality
 
 **Testing Tasks:**
+
 - [ ] `npm run build` - verify compilation
 - [ ] Test account creation with parent relationships
 - [ ] Test account hierarchy display
@@ -219,6 +242,7 @@ Medici is a Node.js library that provides a simple interface for double-entry ac
 **Estimated Time:** 4-5 hours (including tests)
 
 **Files to Create:**
+
 - `app/dashboard/accounts/page.tsx`
 - `components/accounts/accounts-table.tsx`
 - `components/accounts/account-form.tsx`
@@ -233,6 +257,7 @@ Medici is a Node.js library that provides a simple interface for double-entry ac
 **Priority: HIGH** (Core Feature)
 
 **Development Tasks:**
+
 - [ ] List all projects with status filters
 - [ ] Create new project with validation
 - [ ] Edit project details
@@ -241,6 +266,7 @@ Medici is a Node.js library that provides a simple interface for double-entry ac
 - [ ] Project profitability summary
 
 **Testing Tasks:**
+
 - [ ] `npm run build` - verify compilation
 - [ ] Test project CRUD operations
 - [ ] Test project filtering and search
@@ -252,6 +278,7 @@ Medici is a Node.js library that provides a simple interface for double-entry ac
 **Estimated Time:** 5-6 hours (including tests)
 
 **Files to Create:**
+
 - `app/dashboard/projects/page.tsx`
 - `app/dashboard/projects/[id]/page.tsx`
 - `components/projects/project-list.tsx`
@@ -266,6 +293,7 @@ Medici is a Node.js library that provides a simple interface for double-entry ac
 **Priority: HIGH** (Core Feature)
 
 **Development Tasks:**
+
 - [ ] Revenue entry form with validation
 - [ ] Link to project (dropdown)
 - [ ] Multi-currency support with exchange rate
@@ -276,6 +304,7 @@ Medici is a Node.js library that provides a simple interface for double-entry ac
 - [ ] Edit/delete revenue entries
 
 **Testing Tasks:**
+
 - [ ] `npm run build` - verify compilation
 - [ ] Test revenue creation and validation
 - [ ] Test currency conversion calculations
@@ -288,6 +317,7 @@ Medici is a Node.js library that provides a simple interface for double-entry ac
 **Estimated Time:** 5-6 hours (including tests)
 
 **Files to Create:**
+
 - `app/dashboard/revenues/page.tsx`
 - `app/dashboard/revenues/new/page.tsx`
 - `components/revenues/revenue-form.tsx`
@@ -304,6 +334,7 @@ Medici is a Node.js library that provides a simple interface for double-entry ac
 **Priority: HIGH** (Core Feature)
 
 **Development Tasks:**
+
 - [ ] Expense entry form with validation
 - [ ] Category selection (COGS vs Operating Expenses)
 - [ ] Link to project (for COGS expenses)
@@ -315,6 +346,7 @@ Medici is a Node.js library that provides a simple interface for double-entry ac
 - [ ] Edit/delete expense entries
 
 **Testing Tasks:**
+
 - [ ] `npm run build` - verify compilation
 - [ ] Test expense creation for all categories
 - [ ] Test project-linked expenses (COGS)
@@ -327,6 +359,7 @@ Medici is a Node.js library that provides a simple interface for double-entry ac
 **Estimated Time:** 5-6 hours (including tests)
 
 **Files to Create:**
+
 - `app/dashboard/expenses/page.tsx`
 - `app/dashboard/expenses/new/page.tsx`
 - `components/expenses/expense-form.tsx`
@@ -347,12 +380,14 @@ This is the heart of the system - automatically generates journal entries from u
 **Development Tasks:**
 
 #### Revenue Recognition Logic
+
 - [ ] Unbilled Revenue: DR Unbilled Receivable (1200), CR Project Revenue (4xxx)
 - [ ] Invoice Issued: DR Accounts Receivable (1100), CR Unbilled Receivable (1200)
 - [ ] Payment Received: DR Cash/Bank (1001/1002), CR Accounts Receivable (1100)
 - [ ] Currency Gain/Loss calculation and recording
 
 #### Expense Recognition Logic
+
 - [ ] COGS (Freelancer): DR Cost of Sales (5001), CR Accounts Payable (2001)
 - [ ] Expense Payment: DR Accounts Payable (2000), CR Cash/Bank (1001/1002)
 - [ ] Direct Expenses: DR Expense Account (5xxx), CR Cash/Bank (1001/1002)
@@ -360,6 +395,7 @@ This is the heart of the system - automatically generates journal entries from u
 - [ ] Currency Loss calculation and recording
 
 #### Core Functions
+
 - [ ] Transaction processor service
 - [ ] Journal entry generator
 - [ ] Account balance updater
@@ -367,6 +403,7 @@ This is the heart of the system - automatically generates journal entries from u
 - [ ] Reversal entry generator (for corrections)
 
 **Testing Tasks:**
+
 - [ ] `npm run build` - verify compilation
 - [ ] **Unit Tests** for each accounting rule:
   - [ ] Test revenue unbilled → pending → paid transitions
@@ -389,6 +426,7 @@ This is the heart of the system - automatically generates journal entries from u
 **Estimated Time:** 8-10 hours (including comprehensive tests)
 
 **Files to Create:**
+
 - `lib/accounting/transaction-processor.ts`
 - `lib/accounting/revenue-rules.ts`
 - `lib/accounting/expense-rules.ts`
@@ -408,6 +446,7 @@ This is the heart of the system - automatically generates journal entries from u
 **Priority: MEDIUM** (Accountant Feature)
 
 **Development Tasks:**
+
 - [ ] Display all journal entries in table format
 - [ ] Filter by date range, source, account
 - [ ] Show debits and credits for each entry
@@ -417,6 +456,7 @@ This is the heart of the system - automatically generates journal entries from u
 - [ ] Entry reversal functionality
 
 **Testing Tasks:**
+
 - [ ] `npm run build` - verify compilation
 - [ ] Test journal entry list pagination
 - [ ] Test filtering and search
@@ -429,6 +469,7 @@ This is the heart of the system - automatically generates journal entries from u
 **Estimated Time:** 5-6 hours (including tests)
 
 **Files to Create:**
+
 - `app/dashboard/journal/page.tsx`
 - `components/journal/journal-table.tsx`
 - `components/journal/entry-detail.tsx`
@@ -446,6 +487,7 @@ This is the heart of the system - automatically generates journal entries from u
 **Development Tasks:**
 
 #### Income Statement (P&L)
+
 - [ ] Revenue breakdown by type
 - [ ] COGS breakdown
 - [ ] Operating expenses breakdown
@@ -454,18 +496,21 @@ This is the heart of the system - automatically generates journal entries from u
 - [ ] Comparison with previous periods
 
 #### Balance Sheet
+
 - [ ] Assets (Current, Fixed)
 - [ ] Liabilities (Current, Long-term)
 - [ ] Equity
 - [ ] Balance verification (Assets = Liabilities + Equity)
 
 #### Other Reports
+
 - [ ] Trial Balance
 - [ ] Cash Flow Statement
 - [ ] Project Profitability Report
 - [ ] Export all reports to PDF/Excel
 
 **Testing Tasks:**
+
 - [ ] `npm run build` - verify compilation
 - [ ] Test income statement calculations
 - [ ] Test balance sheet balance (A = L + E)
@@ -479,6 +524,7 @@ This is the heart of the system - automatically generates journal entries from u
 **Estimated Time:** 7-9 hours (including tests)
 
 **Files to Create:**
+
 - `app/dashboard/reports/page.tsx`
 - `app/dashboard/reports/income-statement/page.tsx`
 - `app/dashboard/reports/balance-sheet/page.tsx`
@@ -497,6 +543,7 @@ This is the heart of the system - automatically generates journal entries from u
 **Priority: MEDIUM**
 
 **Testing Tasks:**
+
 - [ ] Setup testing framework (Jest + React Testing Library)
 - [ ] E2E tests for critical user flows:
   - [ ] Login as each role
@@ -526,6 +573,7 @@ This is the heart of the system - automatically generates journal entries from u
 **Estimated Time:** 5-7 hours
 
 **Files to Create:**
+
 - `jest.config.js`
 - `__tests__/e2e/user-flow.test.ts`
 - `__tests__/e2e/accounting-flow.test.ts`
@@ -538,6 +586,7 @@ This is the heart of the system - automatically generates journal entries from u
 **Priority: LOW**
 
 **Development Tasks:**
+
 - [x] Setup production database (MongoDB Atlas)
 - [x] Configure environment variables for production
 - [x] Deploy to Railway
@@ -546,6 +595,7 @@ This is the heart of the system - automatically generates journal entries from u
 - [ ] Add error tracking (Sentry)
 
 **Documentation Tasks:**
+
 - [ ] User guide (PDF/video)
 - [ ] Admin guide
 - [ ] Accounting procedures documentation
@@ -559,27 +609,32 @@ This is the heart of the system - automatically generates journal entries from u
 ## Testing Strategy Summary
 
 ### Build & Compile Testing (Every Phase)
+
 ```bash
 npm run build
 npm run lint
 ```
 
 ### Unit Testing
+
 - Test individual functions and components
 - Test business logic in isolation
 - Use Jest for JavaScript/TypeScript functions
 
 ### Integration Testing
+
 - Test API endpoints
 - Test database operations
 - Test component interactions
 
 ### E2E Testing
+
 - Test complete user workflows
 - Test across multiple pages
 - Simulate real user behavior
 
 ### Manual Testing Checklist
+
 - Test on different browsers (Chrome, Firefox, Safari)
 - Test responsive design (mobile, tablet, desktop)
 - Test with different user roles
@@ -619,6 +674,7 @@ npm run lint
 ### Local Development
 
 1. Install MongoDB with replica set:
+
 ```bash
 # macOS
 brew install mongodb-community
@@ -629,17 +685,20 @@ mongosh --eval "rs.initiate()"
 ```
 
 2. Update `.env` file with your database URL:
+
 ```
 DATABASE_URL="mongodb://localhost:27017/accountant?replicaSet=rs0"
 ```
 
 3. Push the schema and seed:
+
 ```bash
 npm run db:push
 npm run db:seed
 ```
 
 4. Verify with Prisma Studio:
+
 ```bash
 npm run db:studio
 ```

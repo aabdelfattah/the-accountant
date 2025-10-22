@@ -7,6 +7,7 @@ A comprehensive accounting system built with Next.js for managing financial tran
 We follow a simplified DDD approach organized around accounting domains:
 
 ### Core Domains
+
 - **Chart of Accounts**: Account types, categories, and hierarchy
 - **Journal Entries**: Double-entry bookkeeping transactions
 - **Projects**: Client projects with associated revenues and expenses
@@ -14,6 +15,7 @@ We follow a simplified DDD approach organized around accounting domains:
 - **User Management**: Authentication and audit trail
 
 ### Folder Structure
+
 ```
 /app                    # Next.js App Router
   /api                 # API route handlers
@@ -41,6 +43,7 @@ We follow a simplified DDD approach organized around accounting domains:
 ## Database Design Philosophy
 
 ### Accounting Principles
+
 - **Double-entry bookkeeping**: Every journal entry has balanced debits and credits
 - **Immutability**: Journal entries are never deleted, only reversed via reversal entries
 - **Audit trail**: Track all changes with timestamps and user references
@@ -49,6 +52,7 @@ We follow a simplified DDD approach organized around accounting domains:
 ### Prisma Schema Structure
 
 #### Key Models
+
 1. **ChartOfAccount**: Chart of accounts with hierarchical structure
    - Self-referential parent/children relationships
    - Tracks current balance
@@ -79,6 +83,7 @@ We follow a simplified DDD approach organized around accounting domains:
    - Used for audit trail
 
 ### Prisma Conventions
+
 - Use explicit relation names for clarity (e.g., "AccountHierarchy", "Reversal")
 - Cascade deletes ONLY for truly dependent data (JournalEntryLine deletes with JournalEntry)
 - Use `@map("_id")` for MongoDB ObjectId compatibility
@@ -89,6 +94,7 @@ We follow a simplified DDD approach organized around accounting domains:
 ## Code Conventions
 
 ### Naming
+
 - **Components**: PascalCase (`TransactionForm.tsx`, `AccountSelector.tsx`)
 - **Functions**: camelCase (`calculateBalance()`, `createJournalEntry()`)
 - **Types/Interfaces**: PascalCase (`AccountWithBalance`, `JournalEntryWithLines`)
@@ -96,6 +102,7 @@ We follow a simplified DDD approach organized around accounting domains:
 - **Enums/Constants**: UPPER_SNAKE_CASE or union types
 
 ### React Patterns
+
 - **Server Components by default** (Next.js 15 App Router)
 - Use `"use client"` directive ONLY when necessary:
   - Forms with user interaction
@@ -107,6 +114,7 @@ We follow a simplified DDD approach organized around accounting domains:
 - Prefer composition over prop drilling
 
 ### API Routes (App Router)
+
 - Location: `/app/api/[resource]/route.ts`
 - Export named functions: `GET`, `POST`, `PUT`, `DELETE`
 - Return `NextResponse.json()` for responses
@@ -115,6 +123,7 @@ We follow a simplified DDD approach organized around accounting domains:
 - Consistent error format: `{ error: "message" }`
 
 ### TypeScript
+
 - Strict mode enabled
 - Use Prisma-generated types whenever possible
 - Create custom types in `/types` for complex business logic
@@ -124,7 +133,9 @@ We follow a simplified DDD approach organized around accounting domains:
 ## Accounting Logic Rules
 
 ### Journal Entry Creation
+
 **CRITICAL**: Every journal entry MUST:
+
 1. Have at least 2 lines (minimum one debit, one credit)
 2. Total debits MUST equal total credits (balanced entry)
 3. Each line references a valid ChartOfAccount
@@ -132,19 +143,23 @@ We follow a simplified DDD approach organized around accounting domains:
 5. Never modify posted journal entries (create reversal instead)
 
 ### Account Balance Calculation
+
 - **Assets & Expenses**: Increased by debits, decreased by credits
 - **Liabilities, Equity & Income**: Increased by credits, decreased by debits
 - Balance = Sum(debits) - Sum(credits) for Asset/Expense accounts
 - Balance = Sum(credits) - Sum(debits) for Liability/Equity/Income accounts
 
 ### Multi-Currency Handling
+
 - Store original amount and currency
 - Store exchangeRate at transaction time
 - Store convertedAmount in base currency (USD)
 - Never recalculate historical exchange rates
 
 ### Reversal Pattern
+
 To reverse a journal entry:
+
 1. Create NEW journal entry with opposite amounts
 2. Link via `reversalId` and `reversedBy` relationship
 3. Mark original entry as `reversed: true`
@@ -268,7 +283,9 @@ When making changes, follow this process:
 6. **Communicate** - Show user what changed and why
 
 ### Before Any Modification
+
 Ask yourself:
+
 - [ ] Is this change requested or necessary?
 - [ ] Do I understand the current implementation?
 - [ ] Can I make this change without touching working features?
@@ -278,6 +295,7 @@ Ask yourself:
 ## Common Patterns
 
 ### Creating a Journal Entry from Revenue
+
 ```typescript
 // 1. Create revenue record
 const revenue = await prisma.revenue.create({ ... })
@@ -307,59 +325,65 @@ await prisma.revenue.update({
 ```
 
 ### Querying Journal Entries with Lines
+
 ```typescript
 const entries = await prisma.journalEntry.findMany({
   include: {
     lines: {
       include: {
-        account: true  // Include account details
-      }
+        account: true, // Include account details
+      },
     },
-    project: true,  // Include related project if exists
+    project: true, // Include related project if exists
   },
   where: {
-    reversed: false  // Only non-reversed entries
-  }
-})
+    reversed: false, // Only non-reversed entries
+  },
+});
 ```
 
 ### Calculating Account Balance
+
 ```typescript
 const lines = await prisma.journalEntryLine.findMany({
   where: { accountId: accountId },
-  include: { account: true }
-})
+  include: { account: true },
+});
 
 const balance = lines.reduce((sum, line) => {
   if (account.type === 'ASSET' || account.type === 'EXPENSE') {
-    return sum + line.debitAmount - line.creditAmount
+    return sum + line.debitAmount - line.creditAmount;
   } else {
-    return sum + line.creditAmount - line.debitAmount
+    return sum + line.creditAmount - line.debitAmount;
   }
-}, 0)
+}, 0);
 ```
 
 ## Known Constraints & Gotchas
 
 ### MongoDB + Prisma Limitations
+
 - No JOIN operations (use `include` for relations)
 - No database-level transactions across collections (consider PostgreSQL if needed)
 - Replica set required for multi-document transactions
 - ObjectId format required for all IDs
 
 ### Medici Integration
+
 - External journal entries stored in Medici
 - We reference via `mediciJournalId` field
 - Keep our JournalEntry as authoritative source of truth
 - Medici used for complex queries/reporting (if implemented)
 
 ### Floating Point Precision
+
 - Currently using Float for amounts (not ideal for money)
 - **TODO**: Consider migrating to Decimal or storing in cents (Int)
 - Be careful with calculations involving money
 - Round appropriately for display
 
 ### Chart of Accounts Hierarchy
+
 - Self-referential relation with `parentId`
 - Can create unlimited depth
 - Be careful with circular references
@@ -376,15 +400,117 @@ const balance = lines.reduce((sum, line) => {
 ## Environment Variables
 
 Required in `.env`:
+
 ```
 DATABASE_URL="mongodb://..."           # MongoDB connection string
 NEXTAUTH_SECRET="..."                  # Auth encryption key (min 32 chars)
 NEXTAUTH_URL="http://localhost:3000"   # Application URL
 ```
 
+## Code Quality Pipeline
+
+### Available Scripts
+
+**Development:**
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+
+**Code Quality:**
+
+- `npm run type-check` - TypeScript type checking (strict mode)
+- `npm run lint` - ESLint check
+- `npm run lint:fix` - Auto-fix ESLint issues
+- `npm run format` - Format code with Prettier
+- `npm run format:check` - Check formatting without changes
+
+**Dead Code Detection:**
+
+- `npm run find-dead-code` - Find unused exports, files, and code (knip)
+- `npm run check-deps` - Find unused dependencies (depcheck)
+
+**Database:**
+
+- `npm run db:generate` - Generate Prisma Client
+- `npm run db:push` - Push schema to database
+- `npm run db:studio` - Open Prisma Studio
+- `npm run db:seed` - Seed database
+
+**CI:**
+
+- `npm run ci` - Run full CI pipeline (type-check, lint, build)
+- `npm run pre-commit` - Pre-commit checks (runs automatically)
+
+### Git Hooks (Husky)
+
+**Pre-commit hook** automatically runs:
+
+- ESLint auto-fix on staged `.ts` and `.tsx` files
+- Prettier formatting on staged files
+- Prevents commit if errors exist
+
+To bypass (use sparingly): `git commit --no-verify`
+
+### CI/CD Pipeline
+
+**GitHub Actions** (`.github/workflows/ci.yml`):
+
+1. Runs on: Push to `main`/`develop`, Pull Requests
+2. Steps:
+   - Install dependencies
+   - Generate Prisma Client
+   - TypeScript type check
+   - ESLint check
+   - Prettier format check
+   - Dead code detection (warning only)
+   - Unused dependencies check (warning only)
+   - Build application
+
+**Railway Deployment:**
+
+- Automatically deploys when CI passes and code is pushed to `main`
+- Railway monitors the repository and handles deployment
+- Environment variables configured in Railway dashboard
+- Production URL: Set via `NEXTAUTH_URL` in Railway
+
+**Required Secrets in GitHub** (for CI builds):
+
+- `DATABASE_URL` - MongoDB connection string (or uses test default)
+- `NEXTAUTH_SECRET` - Auth secret (or uses test default)
+- `NEXTAUTH_URL` - Production URL on Railway (or uses placeholder)
+
+### TypeScript Configuration
+
+Strict mode enabled with:
+
+- `noUnusedLocals` - Detect unused variables
+- `noUnusedParameters` - Detect unused parameters
+- `noImplicitReturns` - Ensure all code paths return
+- `noFallthroughCasesInSwitch` - Prevent switch fallthrough bugs
+- `forceConsistentCasingInFileNames` - Consistent file naming
+
+### ESLint Rules
+
+- Unused variables must start with `_` or will error
+- `any` type triggers warning (use specific types)
+- `console.log` triggers warning (use `console.warn` or `console.error`)
+- Must use `const` over `let` where possible
+- `var` is forbidden
+
+### Prettier Configuration
+
+- 2 space indentation
+- Single quotes
+- Semicolons required
+- Trailing commas (ES5)
+- 80 character line width
+- LF line endings
+
 ## When to Ask User
 
 Always ask before:
+
 - Modifying Prisma schema
 - Adding new npm packages
 - Changing accounting logic

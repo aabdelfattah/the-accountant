@@ -6,7 +6,11 @@
  */
 
 import { prisma } from '../db';
-import { createJournalEntry, getAccountBalance, getAccountLedger } from './book';
+import {
+  createJournalEntry,
+  getAccountBalance,
+  getAccountLedger,
+} from './book';
 
 /**
  * Account path format for Medici: CODE:NAME
@@ -69,7 +73,11 @@ export async function createEntry(params: {
 /**
  * Get account balance
  */
-export async function getBalance(accountCode: string, startDate?: Date, endDate?: Date) {
+export async function getBalance(
+  accountCode: string,
+  startDate?: Date,
+  endDate?: Date
+) {
   const accountPath = await getAccountPath(accountCode);
   return getAccountBalance(accountPath, startDate, endDate);
 }
@@ -77,7 +85,11 @@ export async function getBalance(accountCode: string, startDate?: Date, endDate?
 /**
  * Get ledger entries for an account
  */
-export async function getLedger(accountCode: string, startDate?: Date, endDate?: Date) {
+export async function getLedger(
+  accountCode: string,
+  startDate?: Date,
+  endDate?: Date
+) {
   const accountPath = await getAccountPath(accountCode);
   return getAccountLedger(accountPath, startDate, endDate);
 }

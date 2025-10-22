@@ -1,8 +1,8 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@prisma/client';
 
 const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
-}
+  prisma: PrismaClient | undefined;
+};
 
 // Fix Railway MongoDB URL to include database name
 function getDatabaseUrl(): string {
@@ -16,7 +16,8 @@ function getDatabaseUrl(): string {
     if (urlParts.length === 2) {
       const afterAt = urlParts[1];
       // Check if there's a slash after host:port
-      const hasDbName = afterAt.split('/').length > 1 && afterAt.split('/')[1].length > 0;
+      const hasDbName =
+        afterAt.split('/').length > 1 && afterAt.split('/')[1].length > 0;
       if (!hasDbName) {
         dbUrl = dbUrl + '/accountant?authSource=admin';
       }
@@ -29,13 +30,18 @@ function getDatabaseUrl(): string {
   return dbUrl;
 }
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient({
-  datasources: {
-    db: {
-      url: getDatabaseUrl(),
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    datasources: {
+      db: {
+        url: getDatabaseUrl(),
+      },
     },
-  },
-  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-})
+    log:
+      process.env.NODE_ENV === 'development'
+        ? ['query', 'error', 'warn']
+        : ['error'],
+  });
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;

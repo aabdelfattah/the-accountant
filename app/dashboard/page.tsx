@@ -1,5 +1,11 @@
 import { auth } from '@/auth';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { BookOpen, FolderKanban, Receipt, DollarSign } from 'lucide-react';
 
 export default async function DashboardPage() {
@@ -79,7 +85,10 @@ export default async function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <a href="/dashboard/admin/users" className="text-primary hover:underline">
+            <a
+              href="/dashboard/admin/users"
+              className="text-primary hover:underline"
+            >
               Manage Users →
             </a>
           </CardContent>

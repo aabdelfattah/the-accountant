@@ -1,5 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { getBook } from '@/lib/medici/book';
@@ -21,9 +28,24 @@ export default async function JournalPage() {
   const entries = ledgerData.results || [];
 
   // Group by journal entry
-  const journalMap = new Map<string, any>();
+  type JournalEntry = {
+    id: string;
+    date: Date;
+    memo: string;
+    lines: Array<{ account: string; debit: number; credit: number }>;
+  };
 
-  entries.forEach((entry: any) => {
+  type LedgerEntry = {
+    memo: string;
+    datetime: Date;
+    account_path: string[];
+    debit?: number;
+    credit?: number;
+  };
+
+  const journalMap = new Map<string, JournalEntry>();
+
+  entries.forEach((entry: LedgerEntry) => {
     // Use memo + datetime as grouping key since we don't have direct journal ID
     const key = `${entry.memo}_${entry.datetime.getTime()}`;
 
@@ -64,7 +86,10 @@ export default async function JournalPage() {
                 <div>
                   <CardTitle className="text-lg">{entry.memo}</CardTitle>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {new Date(entry.date).toLocaleDateString()} • {formatDistanceToNow(new Date(entry.date), { addSuffix: true })}
+                    {new Date(entry.date).toLocaleDateString()} •{' '}
+                    {formatDistanceToNow(new Date(entry.date), {
+                      addSuffix: true,
+                    })}
                   </p>
                 </div>
                 <span className="text-xs text-muted-foreground font-mono">
@@ -82,24 +107,36 @@ export default async function JournalPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {entry.lines.map((line: any, idx: number) => (
+                  {entry.lines.map((line, idx: number) => (
                     <TableRow key={idx}>
-                      <TableCell className="font-medium">{line.account}</TableCell>
-                      <TableCell className="text-right">
-                        {line.debit > 0 ? `$${line.debit.toLocaleString()}` : '—'}
+                      <TableCell className="font-medium">
+                        {line.account}
                       </TableCell>
                       <TableCell className="text-right">
-                        {line.credit > 0 ? `$${line.credit.toLocaleString()}` : '—'}
+                        {line.debit > 0
+                          ? `$${line.debit.toLocaleString()}`
+                          : '—'}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {line.credit > 0
+                          ? `$${line.credit.toLocaleString()}`
+                          : '—'}
                       </TableCell>
                     </TableRow>
                   ))}
                   <TableRow className="font-semibold bg-muted/50">
                     <TableCell>Total</TableCell>
                     <TableCell className="text-right">
-                      ${entry.lines.reduce((sum: number, l: any) => sum + l.debit, 0).toLocaleString()}
+                      $
+                      {entry.lines
+                        .reduce((sum: number, l) => sum + l.debit, 0)
+                        .toLocaleString()}
                     </TableCell>
                     <TableCell className="text-right">
-                      ${entry.lines.reduce((sum: number, l: any) => sum + l.credit, 0).toLocaleString()}
+                      $
+                      {entry.lines
+                        .reduce((sum: number, l) => sum + l.credit, 0)
+                        .toLocaleString()}
                     </TableCell>
                   </TableRow>
                 </TableBody>
@@ -111,7 +148,8 @@ export default async function JournalPage() {
         {sortedEntries.length === 0 && (
           <Card>
             <CardContent className="py-8 text-center text-muted-foreground">
-              No journal entries found. Run the seed script to create sample entries.
+              No journal entries found. Run the seed script to create sample
+              entries.
             </CardContent>
           </Card>
         )}

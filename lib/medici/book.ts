@@ -59,7 +59,11 @@ export async function getAccountBalance(
 ) {
   const book = await getBook();
 
-  const options: any = { account: accountPath };
+  const options: {
+    account: string;
+    start_date?: Date;
+    end_date?: Date;
+  } = { account: accountPath };
   if (startDate) options.start_date = startDate;
   if (endDate) options.end_date = endDate;
 
@@ -81,7 +85,11 @@ export async function getAccountLedger(
 ) {
   const book = await getBook();
 
-  const options: any = { account: accountPath };
+  const options: {
+    account: string;
+    start_date?: Date;
+    end_date?: Date;
+  } = { account: accountPath };
   if (startDate) options.start_date = startDate;
   if (endDate) options.end_date = endDate;
 

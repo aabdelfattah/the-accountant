@@ -1,12 +1,12 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: "The Accountant - Accounting Management System",
-  description: "Modern accounting software for project-based businesses",
+  title: 'The Accountant - Accounting Management System',
+  description: 'Modern accounting software for project-based businesses',
 };
 
 export default function RootLayout({

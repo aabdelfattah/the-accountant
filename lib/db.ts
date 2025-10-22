@@ -19,7 +19,8 @@ function getDatabaseUrl(): string {
     const urlParts = dbUrl.split('@');
     if (urlParts.length === 2) {
       const afterAt = urlParts[1];
-      const hasDbName = afterAt.split('/').length > 1 && afterAt.split('/')[1].length > 0;
+      const hasDbName =
+        afterAt.split('/').length > 1 && afterAt.split('/')[1].length > 0;
       if (!hasDbName) {
         dbUrl = dbUrl + '/accountant?authSource=admin';
       }
@@ -55,10 +56,6 @@ export async function connectDb() {
       });
 
       isMongooseConnected = true;
-
-      if (process.env.NODE_ENV === 'development') {
-        console.log('✓ Mongoose connected for Medici');
-      }
     } catch (error) {
       console.error('Mongoose connection error:', error);
       throw error;
@@ -75,10 +72,6 @@ export async function disconnectDb() {
   if (isMongooseConnected) {
     await mongoose.disconnect();
     isMongooseConnected = false;
-
-    if (process.env.NODE_ENV === 'development') {
-      console.log('✓ Mongoose disconnected');
-    }
   }
 
   // Disconnect Prisma
