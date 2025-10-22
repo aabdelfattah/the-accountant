@@ -182,7 +182,182 @@ Medici is a Node.js library that provides a simple interface for double-entry ac
 
 ## 🔨 Remaining Work
 
-### Phase 5: Admin Panel (User Management)
+### Phase 5: Chart of Accounts Infrastructure (CRITICAL - FOUNDATIONAL)
+
+**Priority: CRITICAL** (Must be completed BEFORE revenue/expense recording)
+
+Based on the Transverse Accounting Rules document, we need dynamic account creation to support:
+
+- Project-specific accounts
+- Freelancer-specific accounts
+- Founder loan accounts
+- Client-specific accounts
+
+**Development Tasks:**
+
+#### 5.1 Dynamic Account Creation System
+
+- [ ] Create account template system for auto-generating accounts
+- [ ] Implement account numbering strategy (e.g., 4000-4999 for project revenues)
+- [ ] Build account creation API with validation
+- [ ] Prevent duplicate account codes
+- [ ] Support account hierarchies (parent-child relationships)
+
+#### 5.2 Project-Linked Accounts
+
+- [ ] Auto-create project revenue account when project is created (Code: 4xxx)
+- [ ] Auto-create project COGS account for freelancer costs (Code: 5xxx)
+- [ ] Link accounts to project entity
+- [ ] Archive project accounts when project is archived
+
+#### 5.3 Freelancer/Vendor Accounts
+
+- [ ] Create freelancer master entity (name, email, payment terms)
+- [ ] Auto-create "Accounts Payable - [Freelancer Name]" sub-account (Code: 2001-2099)
+- [ ] Auto-create "Freelancer Expense - [Name]" account (Code: 5001-5099)
+- [ ] Track freelancer payment history
+
+#### 5.4 Founder Loan Accounts
+
+- [ ] Create "Founder Payable - Ahmed" account (Code: 2401)
+- [ ] Support multiple founders if needed
+- [ ] Track founder capital contributions vs. loans
+- [ ] Enable reimbursement tracking
+
+#### 5.5 Client-Specific Accounts (Optional but Recommended)
+
+- [ ] Create client master entity
+- [ ] Auto-create "Accounts Receivable - [Client Name]" sub-account (Code: 1101-1199)
+- [ ] Link invoices to specific client AR accounts
+- [ ] Track aging per client
+
+#### 5.6 System Accounts Required by Accounting Rules
+
+Ensure these accounts exist in seed data:
+
+- [ ] 1100 - Accounts Receivable (parent)
+- [ ] 1200 - Unbilled Receivable
+- [ ] 1300 - Prepaid Expenses
+- [ ] 2000 - Accounts Payable (parent)
+- [ ] 2200 - Taxes Payable
+- [ ] 2300 - Deferred Revenue
+- [ ] 2400 - Founder Loans (parent)
+- [ ] 5400 - Transaction Fee Expense (PayPal, etc.)
+- [ ] 5503 - Bad Debt Expense
+
+**Testing Tasks:**
+
+- [ ] `npm run build` - verify compilation
+- [ ] Test account creation with validation
+- [ ] Test automatic account numbering (no duplicates)
+- [ ] Test project account auto-creation
+- [ ] Test freelancer account auto-creation
+- [ ] Test account hierarchy (parent-child)
+- [ ] Test preventing deletion of accounts with transactions
+- [ ] Write unit tests for account creation logic
+- [ ] Integration test: Create project → Verify accounts created
+
+**Estimated Time:** 8-10 hours (including tests)
+
+**Files to Create:**
+
+- `lib/accounting/account-templates.ts` - Account creation templates
+- `lib/accounting/account-manager.ts` - Dynamic account creation logic
+- `app/api/accounts/route.ts` - Account CRUD API
+- `app/api/accounts/[id]/route.ts` - Single account operations
+- `app/dashboard/accounts/page.tsx` - Enhanced UI for account management
+- `components/accounts/account-form.tsx` - Create/edit account form
+- `components/accounts/account-hierarchy.tsx` - Tree view of accounts
+- `lib/entities/freelancer.ts` - Freelancer entity management
+- `lib/entities/client.ts` - Client entity management
+- `__tests__/lib/account-manager.test.ts`
+- `__tests__/api/accounts.test.ts`
+
+**Database Schema Updates:**
+
+```prisma
+// Add to schema.prisma
+
+model Freelancer {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  email       String?  @unique
+  phoneNumber String?
+  paymentTerms String? // e.g., "NET30", "Upon completion"
+  active      Boolean  @default(true)
+
+  // Linked accounts
+  payableAccountId String? @db.ObjectId
+  expenseAccountId String? @db.ObjectId
+
+  expenses    Expense[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("freelancers")
+}
+
+model Client {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  email       String?
+  phoneNumber String?
+  billingAddress String?
+  paymentTerms String?
+  active      Boolean  @default(true)
+
+  // Linked account
+  receivableAccountId String? @db.ObjectId
+
+  projects    Project[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("clients")
+}
+
+// Update Project model to link to Client
+model Project {
+  // ... existing fields
+  clientId    String?  @db.ObjectId
+  client      Client?  @relation(fields: [clientId], references: [id])
+
+  // Linked accounts
+  revenueAccountId String? @db.ObjectId
+  cogsAccountId    String? @db.ObjectId
+}
+
+// Update ChartOfAccount to track account source
+model ChartOfAccount {
+  // ... existing fields
+
+  // Track what created this account
+  linkedEntityType String? // "PROJECT", "FREELANCER", "CLIENT", "FOUNDER"
+  linkedEntityId   String? @db.ObjectId
+
+  // Account numbering metadata
+  autoGenerated Boolean @default(false)
+
+  @@index([linkedEntityType, linkedEntityId])
+}
+```
+
+**Why This is Critical:**
+
+According to the accounting rules document:
+
+1. **Each project needs its own revenue account** (Rule 1-3)
+2. **Each freelancer needs payable and expense accounts** (Rule 6-7)
+3. **Founders need loan/payable accounts** (Rule 11-12)
+4. **Without these accounts, we cannot record transactions correctly**
+
+This infrastructure must exist BEFORE we can implement revenue and expense recording.
+
+---
+
+### Phase 6: Admin Panel (User Management)
 
 **Priority: HIGH**
 
@@ -252,9 +427,19 @@ Medici is a Node.js library that provides a simple interface for double-entry ac
 
 ---
 
-### Phase 7: Projects Module
+### Phase 7: Chart of Accounts UI & Management
+
+**Priority: HIGH** (Accountant Feature)
+
+**Dependencies:** Phase 5 (Account Infrastructure)
+
+---
+
+### Phase 8: Projects Module
 
 **Priority: HIGH** (Core Feature)
+
+**Dependencies:** Phase 5 (Account Infrastructure - projects need linked accounts)
 
 **Development Tasks:**
 
@@ -288,9 +473,11 @@ Medici is a Node.js library that provides a simple interface for double-entry ac
 
 ---
 
-### Phase 8: Revenue Entry
+### Phase 9: Revenue Entry
 
 **Priority: HIGH** (Core Feature)
+
+**Dependencies:** Phase 5 (Account Infrastructure), Phase 8 (Projects with linked accounts)
 
 **Development Tasks:**
 
@@ -329,9 +516,11 @@ Medici is a Node.js library that provides a simple interface for double-entry ac
 
 ---
 
-### Phase 9: Expense Entry
+### Phase 10: Expense Entry
 
 **Priority: HIGH** (Core Feature)
+
+**Dependencies:** Phase 5 (Account Infrastructure - freelancer accounts), Phase 8 (Projects)
 
 **Development Tasks:**
 
@@ -371,9 +560,11 @@ Medici is a Node.js library that provides a simple interface for double-entry ac
 
 ---
 
-### Phase 10: Accounting Engine
+### Phase 11: Accounting Engine (Transaction Processing)
 
 **Priority: CRITICAL** (Core Logic)
+
+**Dependencies:** Phase 5 (Account Infrastructure), Phase 9 (Revenue), Phase 10 (Expense)
 
 This is the heart of the system - automatically generates journal entries from user transactions.
 
@@ -441,9 +632,11 @@ This is the heart of the system - automatically generates journal entries from u
 
 ---
 
-### Phase 11: Journal Entries UI
+### Phase 12: Journal Entries UI
 
 **Priority: MEDIUM** (Accountant Feature)
+
+**Dependencies:** Phase 11 (Accounting Engine - journal entries must exist)
 
 **Development Tasks:**
 
@@ -480,9 +673,11 @@ This is the heart of the system - automatically generates journal entries from u
 
 ---
 
-### Phase 12: Financial Reports
+### Phase 13: Financial Reports
 
 **Priority: MEDIUM** (Accountant Feature)
+
+**Dependencies:** Phase 11 (Accounting Engine - need complete transaction data)
 
 **Development Tasks:**
 
@@ -538,7 +733,7 @@ This is the heart of the system - automatically generates journal entries from u
 
 ---
 
-### Phase 13: End-to-End Testing & Refinement
+### Phase 14: End-to-End Testing & Refinement
 
 **Priority: MEDIUM**
 
@@ -581,7 +776,7 @@ This is the heart of the system - automatically generates journal entries from u
 
 ---
 
-### Phase 14: Documentation & Additional Features
+### Phase 15: Documentation & Production Hardening
 
 **Priority: LOW**
 
@@ -655,17 +850,48 @@ npm run lint
 
 ## Priority Order for Next Steps
 
+### 🚨 Critical Path (Must Follow This Order)
+
 1. **✅ Medici Integration** (Phase 4) - COMPLETED
-2. **Accounting Engine** (Phase 10) - Core business logic with comprehensive tests
-3. **Projects Module** (Phase 7) - Required for revenues/expenses
-4. **Revenue Entry** (Phase 8) - Core feature
-5. **Expense Entry** (Phase 9) - Core feature
-6. **Chart of Accounts UI** (Phase 6) - Accountant needs
-7. **Journal Entries UI** (Phase 11) - Verify accounting logic visually
-8. **Admin Panel** (Phase 5) - User management
-9. **Financial Reports** (Phase 12) - Business value
-10. **E2E Testing** (Phase 13) - Quality assurance
-11. **Documentation** (Phase 14) - Final polish
+2. **🔴 Chart of Accounts Infrastructure** (Phase 5) - **NEXT - FOUNDATIONAL**
+   - MUST be done first - creates the account framework
+   - Enables dynamic account creation for projects, freelancers, clients
+   - Without this, we cannot record any transactions
+3. **Projects Module** (Phase 8) - Creates project-linked accounts
+4. **Chart of Accounts UI** (Phase 7) - View and manage accounts
+5. **Revenue Entry** (Phase 9) - Record income (uses project accounts)
+6. **Expense Entry** (Phase 10) - Record costs (uses freelancer accounts)
+7. **Accounting Engine** (Phase 11) - Auto-generate journal entries
+8. **Journal Entries UI** (Phase 12) - View accounting transactions
+9. **Financial Reports** (Phase 13) - P&L, Balance Sheet, etc.
+
+### Lower Priority
+
+10. **Admin Panel** (Phase 6) - User management
+11. **E2E Testing** (Phase 14) - Quality assurance
+12. **Documentation** (Phase 15) - Final polish
+
+### Why Phase 5 is Critical First
+
+Based on the Transverse Accounting Rules document:
+
+- **Rule 1-3**: Project revenue flows through project-specific revenue accounts (4xxx)
+- **Rule 6-7**: Freelancer expenses need freelancer-specific payable (2xxx) and expense (5xxx) accounts
+- **Rule 11-12**: Founder expenses need founder payable accounts (2401)
+
+**Without Phase 5 infrastructure:**
+
+- ❌ Cannot create projects (need revenue account)
+- ❌ Cannot record revenue (need unbilled receivable, AR accounts)
+- ❌ Cannot pay freelancers (need AP accounts)
+- ❌ Cannot track founder loans (need payable accounts)
+
+**With Phase 5 complete:**
+
+- ✅ Projects auto-create linked revenue/COGS accounts
+- ✅ Freelancers auto-create linked payable/expense accounts
+- ✅ System has all required accounts per accounting rules
+- ✅ Ready to record transactions correctly
 
 ---
 
