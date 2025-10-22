@@ -18,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { ResetPasswordDialog } from '@/components/admin/reset-password-dialog';
 
 export default async function UsersPage() {
   const session = await auth();
@@ -63,6 +64,7 @@ export default async function UsersPage() {
                 <TableHead>Role</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Created</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -92,6 +94,12 @@ export default async function UsersPage() {
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {new Date(user.createdAt).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <ResetPasswordDialog
+                      userId={user.id}
+                      userName={user.name}
+                    />
                   </TableCell>
                 </TableRow>
               ))}

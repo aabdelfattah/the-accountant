@@ -1,3 +1,5 @@
+import { auth } from '@/auth';
+import { redirect } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -5,8 +7,15 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { ChangePasswordForm } from '@/components/settings/change-password-form';
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const session = await auth();
+
+  if (!session) {
+    redirect('/login');
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -14,22 +23,50 @@ export default function SettingsPage() {
         <p className="text-muted-foreground">Manage your account settings</p>
       </div>
 
+      <div className="grid gap-6 md:grid-cols-2">
+        <ChangePasswordForm />
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile Information</CardTitle>
+            <CardDescription>Your account details</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div>
+              <p className="text-sm font-medium">Name</p>
+              <p className="text-sm text-muted-foreground">
+                {session.user.name}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium">Email</p>
+              <p className="text-sm text-muted-foreground">
+                {session.user.email}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium">Role</p>
+              <p className="text-sm text-muted-foreground">
+                {session.user.role}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Coming Soon</CardTitle>
           <CardDescription>
-            Account settings will be implemented here
+            Additional settings will be implemented here
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            This page will allow you to:
-          </p>
-          <ul className="mt-2 space-y-1 text-sm text-muted-foreground list-disc list-inside">
-            <li>Update your profile information</li>
-            <li>Change your password</li>
+          <ul className="space-y-1 text-sm text-muted-foreground list-disc list-inside">
+            <li>Update profile information</li>
             <li>Configure notification preferences</li>
             <li>Set default currency</li>
+            <li>Language preferences</li>
           </ul>
         </CardContent>
       </Card>
