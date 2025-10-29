@@ -1,0 +1,256 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/auth';
+import { prisma } from '@/lib/prisma';
+import { z } from 'zod';
+
+// Validation schema for creating/updating freelancers
+const freelancerSchema = z.object({
+  name: z.string().min(1, 'Freelancer name is required'),
+  email: z.string().email('Invalid email address').optional().or(z.literal('')),
+  phoneNumber: z.string().optional(),
+  paymentTerms: z.string().optional(),
+  specialization: z.string().optional(),
+  active: z.boolean().default(true),
+  createPayableAccount: z.boolean().default(true),
+  createExpenseAccount: z.boolean().default(true),
+});
+
+// Helper function to find next available account code
+async function getNextAccountCode(parentCode: string): Promise<string> {
+  const accounts = await prisma.chartOfAccount.findMany({
+    where: {
+      code: {
+        startsWith: parentCode,
+      },
+    },
+    orderBy: {
+      code: 'desc',
+    },
+    take: 1,
+  });
+
+  if (accounts.length === 0) {
+    return `${parentCode}1`;
+  }
+
+  const lastCode = accounts[0].code;
+  const suffix = parseInt(lastCode.substring(parentCode.length)) || 0;
+  return `${parentCode}${suffix + 1}`;
+}
+
+// GET /api/freelancers - List all freelancers
+export async function GET(request: NextRequest) {
+  try {
+    const session = await auth();
+
+    if (!session || !session.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const active = searchParams.get('active');
+    const specialization = searchParams.get('specialization');
+
+    const where: { active?: boolean; specialization?: string } = {};
+
+    if (active !== null) {
+      where.active = active === 'true';
+    }
+
+    if (specialization) {
+      where.specialization = specialization;
+    }
+
+    const freelancers = await prisma.freelancer.findMany({
+      where,
+      orderBy: {
+        name: 'asc',
+      },
+      include: {
+        expenses: {
+          select: {
+            id: true,
+            description: true,
+            amount: true,
+            expenseDate: true,
+          },
+          take: 5,
+          orderBy: {
+            expenseDate: 'desc',
+          },
+        },
+        projectFreelancers: {
+          include: {
+            project: {
+              select: {
+                id: true,
+                name: true,
+                status: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return NextResponse.json(freelancers);
+  } catch (error) {
+    console.error('Get freelancers error:', error);
+    return NextResponse.json(
+      { error: 'Failed to retrieve freelancers' },
+      { status: 500 }
+    );
+  }
+}
+
+// POST /api/freelancers - Create a new freelancer
+export async function POST(request: NextRequest) {
+  try {
+    const session = await auth();
+
+    if (!session || !session.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Only ADMIN and ACCOUNTANT can create freelancers
+    if (session.user.role !== 'ADMIN' && session.user.role !== 'ACCOUNTANT') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const validation = freelancerSchema.safeParse(body);
+
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error.errors[0].message },
+        { status: 400 }
+      );
+    }
+
+    const data = validation.data;
+
+    // Check if freelancer with same email already exists
+    if (data.email) {
+      const existingFreelancer = await prisma.freelancer.findUnique({
+        where: { email: data.email },
+      });
+
+      if (existingFreelancer) {
+        return NextResponse.json(
+          { error: `Freelancer with email "${data.email}" already exists` },
+          { status: 409 }
+        );
+      }
+    }
+
+    let payableAccountId: string | undefined;
+    let expenseAccountId: string | undefined;
+
+    // Create A/P account for the freelancer if requested
+    if (data.createPayableAccount) {
+      // Find the parent A/P account (2000)
+      const parentAccount = await prisma.chartOfAccount.findUnique({
+        where: { code: '2000' },
+      });
+
+      if (!parentAccount) {
+        return NextResponse.json(
+          { error: 'Accounts Payable parent account (2000) not found' },
+          { status: 500 }
+        );
+      }
+
+      // Get next available account code
+      const accountCode = await getNextAccountCode('2000');
+
+      // Create the A/P sub-account
+      const apAccount = await prisma.chartOfAccount.create({
+        data: {
+          code: accountCode,
+          name: `AP - ${data.name}`,
+          type: 'LIABILITY',
+          parentId: parentAccount.id,
+          linkedEntityType: 'FREELANCER',
+          autoGenerated: true,
+          description: `Accounts Payable for ${data.name}`,
+        },
+      });
+
+      payableAccountId = apAccount.id;
+    }
+
+    // Create COGS/Expense account for the freelancer if requested
+    if (data.createExpenseAccount) {
+      // Find the parent COGS account (5000)
+      const parentAccount = await prisma.chartOfAccount.findUnique({
+        where: { code: '5000' },
+      });
+
+      if (!parentAccount) {
+        return NextResponse.json(
+          { error: 'Cost of Sales parent account (5000) not found' },
+          { status: 500 }
+        );
+      }
+
+      // Get next available account code
+      const accountCode = await getNextAccountCode('5000');
+
+      // Create the COGS sub-account
+      const cogsAccount = await prisma.chartOfAccount.create({
+        data: {
+          code: accountCode,
+          name: `COGS - ${data.name}`,
+          type: 'EXPENSE',
+          parentId: parentAccount.id,
+          linkedEntityType: 'FREELANCER',
+          autoGenerated: true,
+          description: `Cost of Sales for ${data.name}`,
+        },
+      });
+
+      expenseAccountId = cogsAccount.id;
+    }
+
+    // Create the freelancer
+    const freelancer = await prisma.freelancer.create({
+      data: {
+        name: data.name,
+        email: data.email || null,
+        phoneNumber: data.phoneNumber,
+        paymentTerms: data.paymentTerms,
+        specialization: data.specialization,
+        active: data.active,
+        payableAccountId,
+        expenseAccountId,
+      },
+      include: {
+        expenses: true,
+        projectFreelancers: true,
+      },
+    });
+
+    // Update the linked accounts with the freelancer ID
+    if (payableAccountId) {
+      await prisma.chartOfAccount.update({
+        where: { id: payableAccountId },
+        data: { linkedEntityId: freelancer.id },
+      });
+    }
+
+    if (expenseAccountId) {
+      await prisma.chartOfAccount.update({
+        where: { id: expenseAccountId },
+        data: { linkedEntityId: freelancer.id },
+      });
+    }
+
+    return NextResponse.json(freelancer, { status: 201 });
+  } catch (error) {
+    console.error('Create freelancer error:', error);
+    return NextResponse.json(
+      { error: 'Failed to create freelancer' },
+      { status: 500 }
+    );
+  }
+}
