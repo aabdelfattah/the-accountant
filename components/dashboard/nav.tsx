@@ -10,6 +10,8 @@ import {
   FileText,
   Settings,
   Users,
+  DollarSign,
+  Wallet,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -31,6 +33,18 @@ const navItems: NavItem[] = [
     title: 'Projects',
     href: '/dashboard/projects',
     icon: FolderKanban,
+    roles: ['USER', 'ACCOUNTANT', 'ADMIN'],
+  },
+  {
+    title: 'Revenue',
+    href: '/dashboard/revenues',
+    icon: DollarSign,
+    roles: ['USER', 'ACCOUNTANT', 'ADMIN'],
+  },
+  {
+    title: 'Expenses',
+    href: '/dashboard/expenses',
+    icon: Wallet,
     roles: ['USER', 'ACCOUNTANT', 'ADMIN'],
   },
   {
