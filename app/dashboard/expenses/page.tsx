@@ -14,11 +14,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Plus, Filter } from 'lucide-react';
+import { Plus, Receipt, TrendingDown } from 'lucide-react';
 import Link from 'next/link';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import { ExpenseFilters } from '@/components/expenses/expense-filters';
 
 type SearchParams = {
   startDate?: string;
@@ -137,17 +138,25 @@ export default async function ExpensesPage({
     },
   });
 
+  const hasActiveFilters =
+    searchParams.startDate ||
+    searchParams.endDate ||
+    searchParams.status ||
+    searchParams.category ||
+    searchParams.projectId ||
+    searchParams.freelancerId;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Expenses</h1>
-          <p className="text-muted-foreground">
-            Record and manage business expenses ({expenses.length} total)
+          <h1 className="text-3xl font-bold tracking-tight">Expenses</h1>
+          <p className="text-muted-foreground mt-1">
+            Record and manage business expenses
           </p>
         </div>
         <Link href="/dashboard/expenses/new">
-          <Button>
+          <Button size="lg" className="shadow-sm">
             <Plus className="mr-2 h-4 w-4" />
             New Expense
           </Button>
@@ -156,221 +165,176 @@ export default async function ExpensesPage({
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className="border-l-4 border-l-red-500">
           <CardHeader className="pb-3">
-            <CardDescription>Total Expenses</CardDescription>
-            <CardTitle className="text-2xl">
+            <div className="flex items-center justify-between">
+              <CardDescription className="text-sm font-medium">
+                Total Expenses
+              </CardDescription>
+              <TrendingDown className="h-4 w-4 text-red-500" />
+            </div>
+            <CardTitle className="text-3xl font-bold">
               ${totalAmount.toLocaleString()}
             </CardTitle>
           </CardHeader>
+          <CardContent className="text-xs text-muted-foreground">
+            {expenses.length} entries
+          </CardContent>
         </Card>
-        <Card>
+        <Card className="border-l-4 border-l-green-500">
           <CardHeader className="pb-3">
-            <CardDescription>Paid</CardDescription>
-            <CardTitle className="text-2xl text-red-600">
+            <div className="flex items-center justify-between">
+              <CardDescription className="text-sm font-medium">
+                Paid
+              </CardDescription>
+              <div className="h-2 w-2 rounded-full bg-green-500" />
+            </div>
+            <CardTitle className="text-3xl font-bold text-green-600">
               ${paidAmount.toLocaleString()}
             </CardTitle>
           </CardHeader>
+          <CardContent className="text-xs text-muted-foreground">
+            {expenses.filter((e) => e.paymentStatus === 'PAID').length} paid
+          </CardContent>
         </Card>
-        <Card>
+        <Card className="border-l-4 border-l-orange-500">
           <CardHeader className="pb-3">
-            <CardDescription>Pending</CardDescription>
-            <CardTitle className="text-2xl text-orange-600">
+            <div className="flex items-center justify-between">
+              <CardDescription className="text-sm font-medium">
+                Pending
+              </CardDescription>
+              <div className="h-2 w-2 rounded-full bg-orange-500" />
+            </div>
+            <CardTitle className="text-3xl font-bold text-orange-600">
               ${pendingAmount.toLocaleString()}
             </CardTitle>
           </CardHeader>
+          <CardContent className="text-xs text-muted-foreground">
+            {expenses.filter((e) => e.paymentStatus !== 'PAID').length} pending
+          </CardContent>
         </Card>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            Filters
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form method="get" className="flex flex-wrap gap-4">
-            <div className="flex-1 min-w-[180px]">
-              <label className="text-sm font-medium mb-2 block">
-                Start Date
-              </label>
-              <input
-                type="date"
-                name="startDate"
-                defaultValue={searchParams.startDate}
-                className="w-full px-3 py-2 border rounded-md"
-              />
-            </div>
-            <div className="flex-1 min-w-[180px]">
-              <label className="text-sm font-medium mb-2 block">End Date</label>
-              <input
-                type="date"
-                name="endDate"
-                defaultValue={searchParams.endDate}
-                className="w-full px-3 py-2 border rounded-md"
-              />
-            </div>
-            <div className="flex-1 min-w-[180px]">
-              <label className="text-sm font-medium mb-2 block">Status</label>
-              <select
-                name="status"
-                defaultValue={searchParams.status || ''}
-                className="w-full px-3 py-2 border rounded-md"
-              >
-                <option value="">All Statuses</option>
-                <option value="PENDING">Pending</option>
-                <option value="PAID">Paid</option>
-                <option value="OVERDUE">Overdue</option>
-              </select>
-            </div>
-            <div className="flex-1 min-w-[180px]">
-              <label className="text-sm font-medium mb-2 block">Category</label>
-              <select
-                name="category"
-                defaultValue={searchParams.category || ''}
-                className="w-full px-3 py-2 border rounded-md"
-              >
-                <option value="">All Categories</option>
-                <option value="COGS">COGS</option>
-                <option value="SOFTWARE">Software</option>
-                <option value="MARKETING">Marketing</option>
-                <option value="OPERATIONS">Operations</option>
-                <option value="PAYROLL">Payroll</option>
-                <option value="OTHER">Other</option>
-              </select>
-            </div>
-            <div className="flex-1 min-w-[180px]">
-              <label className="text-sm font-medium mb-2 block">Project</label>
-              <select
-                name="projectId"
-                defaultValue={searchParams.projectId || ''}
-                className="w-full px-3 py-2 border rounded-md"
-              >
-                <option value="">All Projects</option>
-                {projects.map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {project.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex-1 min-w-[180px]">
-              <label className="text-sm font-medium mb-2 block">
-                Freelancer
-              </label>
-              <select
-                name="freelancerId"
-                defaultValue={searchParams.freelancerId || ''}
-                className="w-full px-3 py-2 border rounded-md"
-              >
-                <option value="">All Freelancers</option>
-                {freelancers.map((freelancer) => (
-                  <option key={freelancer.id} value={freelancer.id}>
-                    {freelancer.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-end gap-2">
-              <Button type="submit">Apply Filters</Button>
-              <Link href="/dashboard/expenses">
-                <Button type="button" variant="outline">
-                  Clear
-                </Button>
-              </Link>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+      {/* Modern Google Sheets-style Filters */}
+      <div className="flex items-center justify-between">
+        <ExpenseFilters projects={projects} freelancers={freelancers} />
+      </div>
 
       {/* Expense List */}
-      <Card>
+      <Card className="shadow-sm">
         <CardHeader>
           <CardTitle>Expense Entries</CardTitle>
           <CardDescription>
-            All expense entries sorted by date (newest first)
+            {expenses.length} {expenses.length === 1 ? 'entry' : 'entries'}{' '}
+            sorted by date
           </CardDescription>
         </CardHeader>
         <CardContent>
           {expenses.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No expenses found. Create your first expense entry to get started.
+            <div className="text-center py-12">
+              <div className="mx-auto h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
+                <Receipt className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <h3 className="text-sm font-medium text-gray-900 mb-1">
+                No expenses found
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                {hasActiveFilters
+                  ? 'Try adjusting your filters'
+                  : 'Get started by creating your first expense entry'}
+              </p>
+              {!hasActiveFilters && (
+                <Link href="/dashboard/expenses/new">
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                    New Expense
+                  </Button>
+                </Link>
+              )}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Project</TableHead>
-                  <TableHead>Freelancer</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {expenses.map((expense) => (
-                  <TableRow key={expense.id}>
-                    <TableCell className="font-medium">
-                      {new Date(expense.expenseDate).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {expense.description}
-                    </TableCell>
-                    <TableCell>
-                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                        {expense.category}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {expense.project ? (
-                        <Link
-                          href={`/dashboard/projects/${expense.project.id}`}
-                          className="text-blue-600 hover:underline"
-                        >
-                          {expense.project.name}
-                        </Link>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {expense.freelancer ? (
-                        <span className="text-sm">
-                          {expense.freelancer.name}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          expense.paymentStatus === 'PAID'
-                            ? 'bg-green-100 text-green-800'
-                            : expense.paymentStatus === 'OVERDUE'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-orange-100 text-orange-800'
-                        }`}
-                      >
-                        {expense.paymentStatus}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {expense.currency !== 'USD' && (
-                        <span className="text-xs text-muted-foreground mr-1">
-                          {expense.currency} {expense.amount.toLocaleString()} →
-                        </span>
-                      )}
-                      ${expense.convertedAmount.toLocaleString()}
-                    </TableCell>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="font-semibold">Date</TableHead>
+                    <TableHead className="font-semibold">Description</TableHead>
+                    <TableHead className="font-semibold">Category</TableHead>
+                    <TableHead className="font-semibold">Project</TableHead>
+                    <TableHead className="font-semibold">Freelancer</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
+                    <TableHead className="text-right font-semibold">
+                      Amount
+                    </TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {expenses.map((expense) => (
+                    <TableRow key={expense.id} className="hover:bg-muted/50">
+                      <TableCell className="font-medium">
+                        {new Date(expense.expenseDate).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate">
+                        {expense.description}
+                      </TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          {expense.category}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {expense.project ? (
+                          <Link
+                            href={`/dashboard/projects/${expense.project.id}`}
+                            className="text-blue-600 hover:text-blue-800 font-medium hover:underline"
+                          >
+                            {expense.project.name}
+                          </Link>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">
+                            —
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {expense.freelancer ? (
+                          <span className="text-sm font-medium">
+                            {expense.freelancer.name}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">
+                            —
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            expense.paymentStatus === 'PAID'
+                              ? 'bg-green-100 text-green-800'
+                              : expense.paymentStatus === 'OVERDUE'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-orange-100 text-orange-800'
+                          }`}
+                        >
+                          {expense.paymentStatus}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="font-semibold">
+                          ${expense.convertedAmount.toLocaleString()}
+                        </div>
+                        {expense.currency !== 'USD' && (
+                          <div className="text-xs text-muted-foreground">
+                            {expense.currency} {expense.amount.toLocaleString()}
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

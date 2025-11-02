@@ -14,11 +14,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Plus, Filter } from 'lucide-react';
+import { Plus, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import { RevenueFilters } from '@/components/revenues/revenue-filters';
 
 type SearchParams = {
   startDate?: string;
@@ -110,17 +111,23 @@ export default async function RevenuesPage({
     },
   });
 
+  const hasActiveFilters =
+    searchParams.startDate ||
+    searchParams.endDate ||
+    searchParams.status ||
+    searchParams.projectId;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Revenues</h1>
-          <p className="text-muted-foreground">
-            Track and manage project income ({revenues.length} total)
+          <h1 className="text-3xl font-bold tracking-tight">Revenues</h1>
+          <p className="text-muted-foreground mt-1">
+            Track and manage project income
           </p>
         </div>
         <Link href="/dashboard/revenues/new">
-          <Button>
+          <Button size="lg" className="shadow-sm">
             <Plus className="mr-2 h-4 w-4" />
             New Revenue
           </Button>
@@ -129,176 +136,164 @@ export default async function RevenuesPage({
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="pb-3">
-            <CardDescription>Total Revenue</CardDescription>
-            <CardTitle className="text-2xl">
+            <div className="flex items-center justify-between">
+              <CardDescription className="text-sm font-medium">
+                Total Revenue
+              </CardDescription>
+              <TrendingUp className="h-4 w-4 text-blue-500" />
+            </div>
+            <CardTitle className="text-3xl font-bold">
               ${totalAmount.toLocaleString()}
             </CardTitle>
           </CardHeader>
+          <CardContent className="text-xs text-muted-foreground">
+            {revenues.length} entries
+          </CardContent>
         </Card>
-        <Card>
+        <Card className="border-l-4 border-l-green-500">
           <CardHeader className="pb-3">
-            <CardDescription>Paid</CardDescription>
-            <CardTitle className="text-2xl text-green-600">
+            <div className="flex items-center justify-between">
+              <CardDescription className="text-sm font-medium">
+                Paid
+              </CardDescription>
+              <div className="h-2 w-2 rounded-full bg-green-500" />
+            </div>
+            <CardTitle className="text-3xl font-bold text-green-600">
               ${paidAmount.toLocaleString()}
             </CardTitle>
           </CardHeader>
+          <CardContent className="text-xs text-muted-foreground">
+            {revenues.filter((r) => r.paymentStatus === 'PAID').length} paid
+          </CardContent>
         </Card>
-        <Card>
+        <Card className="border-l-4 border-l-orange-500">
           <CardHeader className="pb-3">
-            <CardDescription>Pending</CardDescription>
-            <CardTitle className="text-2xl text-orange-600">
+            <div className="flex items-center justify-between">
+              <CardDescription className="text-sm font-medium">
+                Pending
+              </CardDescription>
+              <div className="h-2 w-2 rounded-full bg-orange-500" />
+            </div>
+            <CardTitle className="text-3xl font-bold text-orange-600">
               ${pendingAmount.toLocaleString()}
             </CardTitle>
           </CardHeader>
+          <CardContent className="text-xs text-muted-foreground">
+            {revenues.filter((r) => r.paymentStatus !== 'PAID').length} pending
+          </CardContent>
         </Card>
       </div>
 
-      {/* Filters - Client Component */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            Filters
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form method="get" className="flex flex-wrap gap-4">
-            <div className="flex-1 min-w-[200px]">
-              <label className="text-sm font-medium mb-2 block">
-                Start Date
-              </label>
-              <input
-                type="date"
-                name="startDate"
-                defaultValue={searchParams.startDate}
-                className="w-full px-3 py-2 border rounded-md"
-              />
-            </div>
-            <div className="flex-1 min-w-[200px]">
-              <label className="text-sm font-medium mb-2 block">End Date</label>
-              <input
-                type="date"
-                name="endDate"
-                defaultValue={searchParams.endDate}
-                className="w-full px-3 py-2 border rounded-md"
-              />
-            </div>
-            <div className="flex-1 min-w-[200px]">
-              <label className="text-sm font-medium mb-2 block">Status</label>
-              <select
-                name="status"
-                defaultValue={searchParams.status || ''}
-                className="w-full px-3 py-2 border rounded-md"
-              >
-                <option value="">All Statuses</option>
-                <option value="DELIVERED">Delivered</option>
-                <option value="INVOICED">Invoiced</option>
-                <option value="PAID">Paid</option>
-              </select>
-            </div>
-            <div className="flex-1 min-w-[200px]">
-              <label className="text-sm font-medium mb-2 block">Project</label>
-              <select
-                name="projectId"
-                defaultValue={searchParams.projectId || ''}
-                className="w-full px-3 py-2 border rounded-md"
-              >
-                <option value="">All Projects</option>
-                {projects.map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {project.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-end gap-2">
-              <Button type="submit">Apply Filters</Button>
-              <Link href="/dashboard/revenues">
-                <Button type="button" variant="outline">
-                  Clear
-                </Button>
-              </Link>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+      {/* Modern Google Sheets-style Filters */}
+      <div className="flex items-center justify-between">
+        <RevenueFilters projects={projects} />
+      </div>
 
       {/* Revenue List */}
-      <Card>
+      <Card className="shadow-sm">
         <CardHeader>
           <CardTitle>Revenue Entries</CardTitle>
           <CardDescription>
-            All revenue entries sorted by date (newest first)
+            {revenues.length} {revenues.length === 1 ? 'entry' : 'entries'}{' '}
+            sorted by date
           </CardDescription>
         </CardHeader>
         <CardContent>
           {revenues.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No revenues found. Create your first revenue entry to get started.
+            <div className="text-center py-12">
+              <div className="mx-auto h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
+                <TrendingUp className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <h3 className="text-sm font-medium text-gray-900 mb-1">
+                No revenues found
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                {hasActiveFilters
+                  ? 'Try adjusting your filters'
+                  : 'Get started by creating your first revenue entry'}
+              </p>
+              {!hasActiveFilters && (
+                <Link href="/dashboard/revenues/new">
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                    New Revenue
+                  </Button>
+                </Link>
+              )}
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Project</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {revenues.map((revenue) => (
-                  <TableRow key={revenue.id}>
-                    <TableCell className="font-medium">
-                      {new Date(revenue.revenueDate).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <Link
-                        href={`/dashboard/projects/${revenue.project.id}`}
-                        className="text-blue-600 hover:underline"
-                      >
-                        {revenue.project.name}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {revenue.description}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          revenue.paymentStatus === 'PAID'
-                            ? 'bg-green-100 text-green-800'
-                            : revenue.paymentStatus === 'INVOICED'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-orange-100 text-orange-800'
-                        }`}
-                      >
-                        {revenue.paymentStatus}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {revenue.currency !== 'USD' && (
-                        <span className="text-xs text-muted-foreground mr-1">
-                          {revenue.currency} {revenue.amount.toLocaleString()} →
-                        </span>
-                      )}
-                      ${revenue.convertedAmount.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Link href={`/dashboard/projects/${revenue.project.id}`}>
-                        <Button variant="ghost" size="sm">
-                          View
-                        </Button>
-                      </Link>
-                    </TableCell>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="font-semibold">Date</TableHead>
+                    <TableHead className="font-semibold">Project</TableHead>
+                    <TableHead className="font-semibold">Description</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
+                    <TableHead className="text-right font-semibold">
+                      Amount
+                    </TableHead>
+                    <TableHead className="text-right font-semibold">
+                      Actions
+                    </TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {revenues.map((revenue) => (
+                    <TableRow key={revenue.id} className="hover:bg-muted/50">
+                      <TableCell className="font-medium">
+                        {new Date(revenue.revenueDate).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <Link
+                          href={`/dashboard/projects/${revenue.project.id}`}
+                          className="text-blue-600 hover:text-blue-800 font-medium hover:underline"
+                        >
+                          {revenue.project.name}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate">
+                        {revenue.description}
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            revenue.paymentStatus === 'PAID'
+                              ? 'bg-green-100 text-green-800'
+                              : revenue.paymentStatus === 'INVOICED'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-orange-100 text-orange-800'
+                          }`}
+                        >
+                          {revenue.paymentStatus}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="font-semibold">
+                          ${revenue.convertedAmount.toLocaleString()}
+                        </div>
+                        {revenue.currency !== 'USD' && (
+                          <div className="text-xs text-muted-foreground">
+                            {revenue.currency} {revenue.amount.toLocaleString()}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Link
+                          href={`/dashboard/projects/${revenue.project.id}`}
+                        >
+                          <Button variant="ghost" size="sm">
+                            View
+                          </Button>
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
