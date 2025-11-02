@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import Link from 'next/link';
 
 export default function RevenuesPage() {
   return (
@@ -18,10 +19,12 @@ export default function RevenuesPage() {
             Track and manage project income
           </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          New Revenue
-        </Button>
+        <Link href="/dashboard/revenues/new">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            New Revenue
+          </Button>
+        </Link>
       </div>
 
       <Card>

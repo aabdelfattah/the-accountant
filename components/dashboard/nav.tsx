@@ -6,8 +6,6 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
   FolderKanban,
-  DollarSign,
-  Receipt,
   BookOpen,
   FileText,
   Settings,
@@ -33,18 +31,6 @@ const navItems: NavItem[] = [
     title: 'Projects',
     href: '/dashboard/projects',
     icon: FolderKanban,
-    roles: ['USER', 'ACCOUNTANT', 'ADMIN'],
-  },
-  {
-    title: 'Revenues',
-    href: '/dashboard/revenues',
-    icon: DollarSign,
-    roles: ['USER', 'ACCOUNTANT', 'ADMIN'],
-  },
-  {
-    title: 'Expenses',
-    href: '/dashboard/expenses',
-    icon: Receipt,
     roles: ['USER', 'ACCOUNTANT', 'ADMIN'],
   },
   {

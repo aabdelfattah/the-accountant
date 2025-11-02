@@ -165,6 +165,94 @@ To reverse a journal entry:
 3. Mark original entry as `reversed: true`
 4. Never delete the original entry
 
+### Cash Accounting Basis
+
+**CRITICAL**: This system follows **Cash Accounting** principles:
+
+1. **Revenue Recognition**
+   - Revenue is recorded when DELIVERED or INVOICED (tracks what's owed)
+   - **Journal entries are ONLY created when revenue status = PAID** (cash received)
+   - DELIVERED/INVOICED revenues have `journalEntryId = null`
+   - One PAID revenue → One journal entry (one-to-one relationship)
+
+2. **Expense Recognition**
+   - Expense is recorded when incurred (tracks what's owed)
+   - **Journal entries are ONLY created when expense is PAID** (cash paid out)
+   - PENDING/OVERDUE expenses have `journalEntryId = null`
+   - One PAID expense → One journal entry (one-to-one relationship)
+
+3. **Database Schema Implications**
+   - `Revenue.journalEntryId` is nullable (unpaid revenues have null)
+   - `Expense.journalEntryId` is nullable (unpaid expenses have null)
+   - Multiple revenues/expenses can have `null` journalEntryId
+   - MongoDB allows multiple null values in unique indexes (supports one-to-one relation)
+   - Each JournalEntry references exactly ONE Revenue OR ONE Expense (source tracking)
+
+## Business Rules
+
+### Revenue Management
+
+**CRITICAL RULES**:
+
+1. **Revenues MUST be linked to a Project**
+   - Every revenue entry MUST have a `projectId`
+   - Revenues can ONLY be created from within a project (not from standalone revenue pages)
+   - This ensures proper project profitability tracking
+
+2. **Revenue Status Workflow**
+   - Revenue progresses through three states: **DELIVERED → INVOICED → PAID**
+   - **DELIVERED**: Work has been delivered to client but not yet invoiced
+   - **INVOICED**: Invoice has been sent to client, awaiting payment
+   - **PAID**: Payment has been received
+   - Status transitions should be sequential (cannot skip states)
+
+3. **Revenue Dates**
+   - `revenueDate`: When the work was delivered (required)
+   - `invoiceDate`: When invoice was sent (set when status → INVOICED)
+   - `paymentDate`: When payment was received (set when status → PAID)
+   - `dueDate`: Payment due date (optional, typically set when invoiced)
+
+### Expense Management
+
+**CRITICAL RULES**:
+
+1. **Expenses can be linked to Project (Optional)**
+   - Project-linked expenses: Track as COGS (Cost of Goods Sold) for that project
+   - Non-project expenses: Track as operating expenses
+   - Expenses can be created from project pages OR standalone expense pages
+
+2. **Expenses can be linked to Freelancer (Optional)**
+   - Track which freelancer the expense was paid to
+   - Used for generating AP (Accounts Payable) entries
+   - Not all expenses require freelancer assignment (e.g., software subscriptions)
+
+3. **Expense Categories**
+   - **COGS**: Cost of Goods Sold (typically project-linked, freelancer work)
+   - **SOFTWARE**: Software subscriptions and tools
+   - **MARKETING**: Marketing and advertising costs
+   - **OPERATIONS**: Operational and administrative costs
+   - **PAYROLL**: Salaries and payroll expenses
+   - **OTHER**: Miscellaneous expenses
+
+4. **Expense Status**
+   - **PENDING**: Expense recorded but not yet paid
+   - **PAID**: Expense has been paid
+   - **OVERDUE**: Payment is overdue
+
+### Navigation Rules
+
+**CRITICAL**: Revenue and Expense pages should NOT be accessible from main navigation.
+
+1. **Revenues**:
+   - Accessible ONLY from project detail pages
+   - Click "Add Revenue" button on project page → Opens revenue form
+   - Revenue form has project pre-selected (required, cannot be changed)
+
+2. **Expenses**:
+   - Can be created from project detail pages (project pre-selected)
+   - Can also be created from standalone expenses page (for non-project expenses)
+   - Expense form allows changing/removing project selection
+
 ## Critical DOs and DON'Ts
 
 ### ⚠️ CRITICAL DON'Ts - NEVER DO THESE

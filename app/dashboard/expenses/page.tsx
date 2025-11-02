@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
+import Link from 'next/link';
 
 export default function ExpensesPage() {
   return (
@@ -18,10 +19,12 @@ export default function ExpensesPage() {
             Record and manage business expenses
           </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          New Expense
-        </Button>
+        <Link href="/dashboard/expenses/new">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            New Expense
+          </Button>
+        </Link>
       </div>
 
       <Card>

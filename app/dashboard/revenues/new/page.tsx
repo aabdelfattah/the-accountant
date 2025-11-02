@@ -1,19 +1,40 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { auth } from '@/auth';
+import { redirect } from 'next/navigation';
+import { prisma } from '@/lib/prisma';
+import { RevenueForm } from '@/components/revenues/revenue-form';
 
-export default function NewRevenuePage({
+export default async function NewRevenuePage({
   searchParams,
 }: {
   searchParams: { projectId?: string };
 }) {
+  const session = await auth();
+
+  if (!session?.user) {
+    redirect('/login');
+  }
+
+  // Fetch projects for the dropdown
+  const projects = await prisma.project.findMany({
+    where: {
+      status: {
+        not: 'ARCHIVED',
+      },
+      // Non-admin users can only see their own projects
+      ...(session.user.role !== 'ADMIN' ? { userId: session.user.id } : {}),
+    },
+    select: {
+      id: true,
+      name: true,
+    },
+    orderBy: {
+      name: 'asc',
+    },
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -34,31 +55,10 @@ export default function NewRevenuePage({
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Coming Soon - Phase 9</CardTitle>
-          <CardDescription>
-            Revenue entry form will be implemented in Phase 9
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-4">
-            This page will allow you to:
-          </p>
-          <ul className="space-y-1 text-sm text-muted-foreground list-disc list-inside">
-            <li>Record revenue entries with amount and date</li>
-            <li>Link to projects automatically</li>
-            <li>Track payment status (Unbilled → Pending → Paid)</li>
-            <li>Support multi-currency with exchange rates</li>
-            <li>Auto-generate journal entries</li>
-          </ul>
-          {searchParams.projectId && (
-            <p className="mt-4 text-sm text-blue-600">
-              Project ID: {searchParams.projectId}
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      <RevenueForm
+        projects={projects}
+        defaultProjectId={searchParams.projectId}
+      />
     </div>
   );
 }

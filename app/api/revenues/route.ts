@@ -14,9 +14,7 @@ const createRevenueSchema = z.object({
   invoiceDate: z.string().optional().nullable(),
   paymentDate: z.string().optional().nullable(),
   dueDate: z.string().optional().nullable(),
-  paymentStatus: z
-    .enum(['UNBILLED', 'PENDING', 'PAID', 'OVERDUE'])
-    .default('UNBILLED'),
+  paymentStatus: z.enum(['DELIVERED', 'INVOICED', 'PAID']).default('DELIVERED'),
   bankAccount: z.string().optional().nullable(),
   taxAmount: z.number().optional().nullable(),
   withholdingAmount: z.number().optional().nullable(),
