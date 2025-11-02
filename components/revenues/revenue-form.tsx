@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
@@ -13,13 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { Loader2 } from 'lucide-react';
 
 type Project = {
   id: string;
@@ -46,10 +40,10 @@ export function RevenueForm({ projects, defaultProjectId }: RevenueFormProps) {
     currency: 'USD',
     exchangeRate: '1',
     revenueDate: new Date().toISOString().split('T')[0],
+    paymentStatus: 'DELIVERED',
     invoiceDate: '',
     paymentDate: '',
     dueDate: '',
-    paymentStatus: 'DELIVERED',
     bankAccount: '',
     taxAmount: '',
     withholdingAmount: '',
@@ -61,7 +55,6 @@ export function RevenueForm({ projects, defaultProjectId }: RevenueFormProps) {
     setLoading(true);
 
     try {
-      // Validate required fields
       if (!formData.description.trim()) {
         setMessage({ type: 'error', text: 'Description is required' });
         setLoading(false);
@@ -83,7 +76,6 @@ export function RevenueForm({ projects, defaultProjectId }: RevenueFormProps) {
         return;
       }
 
-      // Prepare data for API
       const payload = {
         description: formData.description,
         projectId: formData.projectId,
@@ -121,7 +113,6 @@ export function RevenueForm({ projects, defaultProjectId }: RevenueFormProps) {
 
       setMessage({ type: 'success', text: 'Revenue created successfully!' });
 
-      // Redirect after success
       setTimeout(() => {
         if (formData.projectId) {
           router.push(`/dashboard/projects/${formData.projectId}`);
@@ -133,289 +124,268 @@ export function RevenueForm({ projects, defaultProjectId }: RevenueFormProps) {
       console.error('Error creating revenue:', error);
       setMessage({
         type: 'error',
-        text: 'An unexpected error occurred',
+        text: 'An unexpected error occurred. Please try again.',
       });
       setLoading(false);
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Revenue Details</CardTitle>
-        <CardDescription>
-          Enter the details of the revenue entry
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">
-              Description <span className="text-red-500">*</span>
-            </Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              placeholder="e.g., Payment for Project XYZ - Milestone 1"
-              required
-            />
-          </div>
+    <div className="max-w-2xl mx-auto">
+      <Card>
+        <CardContent className="pt-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Basic Information */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Basic Information
+              </h3>
 
-          {/* Project */}
-          <div className="space-y-2">
-            <Label htmlFor="projectId">
-              Project <span className="text-red-500">*</span>
-            </Label>
-            <Select
-              value={formData.projectId}
-              onValueChange={(value) =>
-                setFormData({ ...formData, projectId: value })
-              }
-              required
-              disabled={!!defaultProjectId}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a project" />
-              </SelectTrigger>
-              <SelectContent>
-                {projects.map((project) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    {project.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {defaultProjectId && (
-              <p className="text-xs text-muted-foreground">
-                Project is pre-selected and cannot be changed
-              </p>
-            )}
-          </div>
+              <div className="grid grid-cols-[140px_1fr] gap-4 items-start">
+                <label className="text-sm font-medium pt-2">
+                  Project <span className="text-red-500">*</span>
+                </label>
+                <Select
+                  value={formData.projectId}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, projectId: value })
+                  }
+                  required
+                  disabled={!!defaultProjectId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a project" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {projects.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          {/* Amount and Currency */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="amount">
-                Amount <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="amount"
-                type="number"
-                step="0.01"
-                value={formData.amount}
-                onChange={(e) =>
-                  setFormData({ ...formData, amount: e.target.value })
-                }
-                placeholder="0.00"
-                required
-              />
+              <div className="grid grid-cols-[140px_1fr] gap-4 items-start">
+                <label className="text-sm font-medium pt-2">
+                  Description <span className="text-red-500">*</span>
+                </label>
+                <Textarea
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  placeholder="Brief description of the revenue"
+                  required
+                  rows={3}
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="currency">Currency</Label>
-              <Select
-                value={formData.currency}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, currency: value })
-                }
+            {/* Amount & Currency */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Amount
+              </h3>
+
+              <div className="grid grid-cols-[140px_1fr_1fr] gap-4 items-start">
+                <label className="text-sm font-medium pt-2">
+                  Amount <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.amount}
+                  onChange={(e) =>
+                    setFormData({ ...formData, amount: e.target.value })
+                  }
+                  placeholder="0.00"
+                  required
+                />
+                <Select
+                  value={formData.currency}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, currency: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                    <SelectItem value="GBP">GBP</SelectItem>
+                    <SelectItem value="EGP">EGP</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {formData.currency !== 'USD' && (
+                <div className="grid grid-cols-[140px_1fr] gap-4 items-start">
+                  <label className="text-sm font-medium pt-2">
+                    Exchange Rate
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.0001"
+                    value={formData.exchangeRate}
+                    onChange={(e) =>
+                      setFormData({ ...formData, exchangeRate: e.target.value })
+                    }
+                    placeholder="1.0000"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Dates & Status */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Dates & Status
+              </h3>
+
+              <div className="grid grid-cols-[140px_1fr_1fr] gap-4 items-start">
+                <label className="text-sm font-medium pt-2">
+                  Revenue Date <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  type="date"
+                  value={formData.revenueDate}
+                  onChange={(e) =>
+                    setFormData({ ...formData, revenueDate: e.target.value })
+                  }
+                  required
+                />
+                <Select
+                  value={formData.paymentStatus}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, paymentStatus: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="DELIVERED">Delivered</SelectItem>
+                    <SelectItem value="INVOICED">Invoiced</SelectItem>
+                    <SelectItem value="PAID">Paid</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {formData.paymentStatus === 'INVOICED' && (
+                <div className="grid grid-cols-[140px_1fr_1fr] gap-4 items-start">
+                  <label className="text-sm font-medium pt-2">
+                    Invoice Date
+                  </label>
+                  <Input
+                    type="date"
+                    value={formData.invoiceDate}
+                    onChange={(e) =>
+                      setFormData({ ...formData, invoiceDate: e.target.value })
+                    }
+                  />
+                  <Input
+                    type="date"
+                    value={formData.dueDate}
+                    onChange={(e) =>
+                      setFormData({ ...formData, dueDate: e.target.value })
+                    }
+                    placeholder="Due Date"
+                  />
+                </div>
+              )}
+
+              {formData.paymentStatus === 'PAID' && (
+                <div className="grid grid-cols-[140px_1fr] gap-4 items-start">
+                  <label className="text-sm font-medium pt-2">
+                    Payment Date
+                  </label>
+                  <Input
+                    type="date"
+                    value={formData.paymentDate}
+                    onChange={(e) =>
+                      setFormData({ ...formData, paymentDate: e.target.value })
+                    }
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Optional Details */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Additional Details (Optional)
+              </h3>
+
+              <div className="grid grid-cols-[140px_1fr] gap-4 items-start">
+                <label className="text-sm font-medium pt-2">Bank Account</label>
+                <Input
+                  value={formData.bankAccount}
+                  onChange={(e) =>
+                    setFormData({ ...formData, bankAccount: e.target.value })
+                  }
+                  placeholder="e.g., PayPal, Bank Transfer"
+                />
+              </div>
+
+              <div className="grid grid-cols-[140px_1fr_1fr] gap-4 items-start">
+                <label className="text-sm font-medium pt-2">Deductions</label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.taxAmount}
+                  onChange={(e) =>
+                    setFormData({ ...formData, taxAmount: e.target.value })
+                  }
+                  placeholder="Tax Amount"
+                />
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.withholdingAmount}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      withholdingAmount: e.target.value,
+                    })
+                  }
+                  placeholder="Withholding"
+                />
+              </div>
+            </div>
+
+            {/* Message */}
+            {message && (
+              <div
+                className={`p-3 rounded-md text-sm ${
+                  message.type === 'success'
+                    ? 'bg-green-50 text-green-800 border border-green-200'
+                    : 'bg-red-50 text-red-800 border border-red-200'
+                }`}
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="USD">USD</SelectItem>
-                  <SelectItem value="EUR">EUR</SelectItem>
-                  <SelectItem value="EGP">EGP</SelectItem>
-                  <SelectItem value="GBP">GBP</SelectItem>
-                  <SelectItem value="SAR">SAR</SelectItem>
-                  <SelectItem value="AED">AED</SelectItem>
-                </SelectContent>
-              </Select>
+                {message.text}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.back()}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Create Revenue
+              </Button>
             </div>
-          </div>
-
-          {/* Exchange Rate */}
-          {formData.currency !== 'USD' && (
-            <div className="space-y-2">
-              <Label htmlFor="exchangeRate">
-                Exchange Rate to USD <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="exchangeRate"
-                type="number"
-                step="0.0001"
-                value={formData.exchangeRate}
-                onChange={(e) =>
-                  setFormData({ ...formData, exchangeRate: e.target.value })
-                }
-                placeholder="1.0000"
-                required
-              />
-              <p className="text-xs text-muted-foreground">
-                1 {formData.currency} = {formData.exchangeRate} USD
-              </p>
-            </div>
-          )}
-
-          {/* Dates */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="revenueDate">
-                Revenue Date <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="revenueDate"
-                type="date"
-                value={formData.revenueDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, revenueDate: e.target.value })
-                }
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="invoiceDate">Invoice Date</Label>
-              <Input
-                id="invoiceDate"
-                type="date"
-                value={formData.invoiceDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, invoiceDate: e.target.value })
-                }
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="paymentDate">Payment Date</Label>
-              <Input
-                id="paymentDate"
-                type="date"
-                value={formData.paymentDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, paymentDate: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="dueDate">Due Date</Label>
-              <Input
-                id="dueDate"
-                type="date"
-                value={formData.dueDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, dueDate: e.target.value })
-                }
-              />
-            </div>
-          </div>
-
-          {/* Revenue Status */}
-          <div className="space-y-2">
-            <Label htmlFor="paymentStatus">Revenue Status</Label>
-            <Select
-              value={formData.paymentStatus}
-              onValueChange={(value) =>
-                setFormData({ ...formData, paymentStatus: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="DELIVERED">Delivered</SelectItem>
-                <SelectItem value="INVOICED">Invoiced</SelectItem>
-                <SelectItem value="PAID">Paid</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              Workflow: Delivered → Invoiced → Paid
-            </p>
-          </div>
-
-          {/* Bank Account */}
-          <div className="space-y-2">
-            <Label htmlFor="bankAccount">Bank Account</Label>
-            <Input
-              id="bankAccount"
-              value={formData.bankAccount}
-              onChange={(e) =>
-                setFormData({ ...formData, bankAccount: e.target.value })
-              }
-              placeholder="e.g., PayPal, Bank Account"
-            />
-          </div>
-
-          {/* Tax and Withholding */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="taxAmount">Tax Amount</Label>
-              <Input
-                id="taxAmount"
-                type="number"
-                step="0.01"
-                value={formData.taxAmount}
-                onChange={(e) =>
-                  setFormData({ ...formData, taxAmount: e.target.value })
-                }
-                placeholder="0.00"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="withholdingAmount">Withholding Amount</Label>
-              <Input
-                id="withholdingAmount"
-                type="number"
-                step="0.01"
-                value={formData.withholdingAmount}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    withholdingAmount: e.target.value,
-                  })
-                }
-                placeholder="0.00"
-              />
-            </div>
-          </div>
-
-          {/* Message */}
-          {message && (
-            <div
-              className={`p-3 rounded ${
-                message.type === 'success'
-                  ? 'bg-green-50 text-green-700'
-                  : 'bg-red-50 text-red-700'
-              }`}
-            >
-              {message.text}
-            </div>
-          )}
-
-          {/* Buttons */}
-          <div className="flex gap-4">
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Revenue'}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.back()}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

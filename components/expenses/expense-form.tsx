@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -14,13 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
+import { Loader2 } from 'lucide-react';
 
 type Project = {
   id: string;
@@ -59,10 +53,10 @@ export function ExpenseForm({
     currency: 'USD',
     exchangeRate: '1',
     expenseDate: new Date().toISOString().split('T')[0],
+    paymentStatus: 'PENDING',
     invoiceDate: '',
     paymentDate: '',
     dueDate: '',
-    paymentStatus: 'PAID',
     bankAccount: '',
     taxAmount: '',
     withholdingAmount: '',
@@ -76,15 +70,8 @@ export function ExpenseForm({
     setLoading(true);
 
     try {
-      // Validate required fields
       if (!formData.description.trim()) {
         setMessage({ type: 'error', text: 'Description is required' });
-        setLoading(false);
-        return;
-      }
-
-      if (!formData.category) {
-        setMessage({ type: 'error', text: 'Category is required' });
         setLoading(false);
         return;
       }
@@ -98,7 +85,6 @@ export function ExpenseForm({
         return;
       }
 
-      // Prepare data for API
       const payload = {
         description: formData.description,
         category: formData.category,
@@ -141,7 +127,6 @@ export function ExpenseForm({
 
       setMessage({ type: 'success', text: 'Expense created successfully!' });
 
-      // Redirect after success
       setTimeout(() => {
         if (formData.projectId && formData.projectId !== 'none') {
           router.push(`/dashboard/projects/${formData.projectId}`);
@@ -153,369 +138,319 @@ export function ExpenseForm({
       console.error('Error creating expense:', error);
       setMessage({
         type: 'error',
-        text: 'An unexpected error occurred',
+        text: 'An unexpected error occurred. Please try again.',
       });
       setLoading(false);
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Expense Details</CardTitle>
-        <CardDescription>
-          Enter the details of the expense entry
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">
-              Description <span className="text-red-500">*</span>
-            </Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              placeholder="e.g., Payment to freelancer for video editing"
-              required
-            />
-          </div>
+    <div className="max-w-2xl mx-auto">
+      <Card>
+        <CardContent className="pt-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Basic Information */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Basic Information
+              </h3>
 
-          {/* Category */}
-          <div className="space-y-2">
-            <Label htmlFor="category">
-              Category <span className="text-red-500">*</span>
-            </Label>
-            <Select
-              value={formData.category}
-              onValueChange={(value) =>
-                setFormData({ ...formData, category: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="COGS">
-                  COGS (Cost of Goods Sold - Freelancers, Production)
-                </SelectItem>
-                <SelectItem value="SOFTWARE">Software & Tools</SelectItem>
-                <SelectItem value="MARKETING">
-                  Marketing & Advertising
-                </SelectItem>
-                <SelectItem value="OPERATIONS">Operations & Admin</SelectItem>
-                <SelectItem value="PAYROLL">Payroll & Salary</SelectItem>
-                <SelectItem value="OTHER">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+              <div className="grid grid-cols-[140px_1fr] gap-4 items-start">
+                <label className="text-sm font-medium pt-2">
+                  Description <span className="text-red-500">*</span>
+                </label>
+                <Textarea
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  placeholder="Brief description of the expense"
+                  required
+                  rows={3}
+                />
+              </div>
 
-          {/* Project and Freelancer */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="projectId">Project (Optional)</Label>
-              <Select
-                value={formData.projectId}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, projectId: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a project" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  {projects.map((project) => (
-                    <SelectItem key={project.id} value={project.id}>
-                      {project.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="freelancerId">Freelancer (Optional)</Label>
-              <Select
-                value={formData.freelancerId}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, freelancerId: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a freelancer" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  {freelancers.map((freelancer) => (
-                    <SelectItem key={freelancer.id} value={freelancer.id}>
-                      {freelancer.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Amount and Currency */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="amount">
-                Amount <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="amount"
-                type="number"
-                step="0.01"
-                value={formData.amount}
-                onChange={(e) =>
-                  setFormData({ ...formData, amount: e.target.value })
-                }
-                placeholder="0.00"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="currency">Currency</Label>
-              <Select
-                value={formData.currency}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, currency: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="USD">USD</SelectItem>
-                  <SelectItem value="EUR">EUR</SelectItem>
-                  <SelectItem value="EGP">EGP</SelectItem>
-                  <SelectItem value="GBP">GBP</SelectItem>
-                  <SelectItem value="SAR">SAR</SelectItem>
-                  <SelectItem value="AED">AED</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Exchange Rate */}
-          {formData.currency !== 'USD' && (
-            <div className="space-y-2">
-              <Label htmlFor="exchangeRate">
-                Exchange Rate to USD <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="exchangeRate"
-                type="number"
-                step="0.0001"
-                value={formData.exchangeRate}
-                onChange={(e) =>
-                  setFormData({ ...formData, exchangeRate: e.target.value })
-                }
-                placeholder="1.0000"
-                required
-              />
-              <p className="text-xs text-muted-foreground">
-                1 {formData.currency} = {formData.exchangeRate} USD
-              </p>
-            </div>
-          )}
-
-          {/* Dates */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="expenseDate">
-                Expense Date <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="expenseDate"
-                type="date"
-                value={formData.expenseDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, expenseDate: e.target.value })
-                }
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="invoiceDate">Invoice Date</Label>
-              <Input
-                id="invoiceDate"
-                type="date"
-                value={formData.invoiceDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, invoiceDate: e.target.value })
-                }
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="paymentDate">Payment Date</Label>
-              <Input
-                id="paymentDate"
-                type="date"
-                value={formData.paymentDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, paymentDate: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="dueDate">Due Date</Label>
-              <Input
-                id="dueDate"
-                type="date"
-                value={formData.dueDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, dueDate: e.target.value })
-                }
-              />
-            </div>
-          </div>
-
-          {/* Payment Status */}
-          <div className="space-y-2">
-            <Label htmlFor="paymentStatus">Payment Status</Label>
-            <Select
-              value={formData.paymentStatus}
-              onValueChange={(value) =>
-                setFormData({ ...formData, paymentStatus: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="PENDING">Pending</SelectItem>
-                <SelectItem value="PAID">Paid</SelectItem>
-                <SelectItem value="OVERDUE">Overdue</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Bank Account */}
-          <div className="space-y-2">
-            <Label htmlFor="bankAccount">Bank Account</Label>
-            <Input
-              id="bankAccount"
-              value={formData.bankAccount}
-              onChange={(e) =>
-                setFormData({ ...formData, bankAccount: e.target.value })
-              }
-              placeholder="e.g., PayPal, Bank Account"
-            />
-          </div>
-
-          {/* Tax and Withholding */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="taxAmount">Tax Amount</Label>
-              <Input
-                id="taxAmount"
-                type="number"
-                step="0.01"
-                value={formData.taxAmount}
-                onChange={(e) =>
-                  setFormData({ ...formData, taxAmount: e.target.value })
-                }
-                placeholder="0.00"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="withholdingAmount">Withholding Amount</Label>
-              <Input
-                id="withholdingAmount"
-                type="number"
-                step="0.01"
-                value={formData.withholdingAmount}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    withholdingAmount: e.target.value,
-                  })
-                }
-                placeholder="0.00"
-              />
-            </div>
-          </div>
-
-          {/* Recurring Expense */}
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="isRecurring"
-                checked={formData.isRecurring}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, isRecurring: checked as boolean })
-                }
-              />
-              <Label htmlFor="isRecurring" className="cursor-pointer">
-                This is a recurring expense (e.g., monthly subscription)
-              </Label>
-            </div>
-
-            {formData.isRecurring && (
-              <div className="space-y-2">
-                <Label htmlFor="recurringPeriod">Recurring Period</Label>
+              <div className="grid grid-cols-[140px_1fr_1fr] gap-4 items-start">
+                <label className="text-sm font-medium pt-2">
+                  Category <span className="text-red-500">*</span>
+                </label>
                 <Select
-                  value={formData.recurringPeriod}
+                  value={formData.category}
                   onValueChange={(value) =>
-                    setFormData({ ...formData, recurringPeriod: value })
+                    setFormData({ ...formData, category: value })
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select period" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="WEEKLY">Weekly</SelectItem>
-                    <SelectItem value="MONTHLY">Monthly</SelectItem>
-                    <SelectItem value="QUARTERLY">Quarterly</SelectItem>
-                    <SelectItem value="YEARLY">Yearly</SelectItem>
+                    <SelectItem value="COGS">COGS</SelectItem>
+                    <SelectItem value="SOFTWARE">Software</SelectItem>
+                    <SelectItem value="MARKETING">Marketing</SelectItem>
+                    <SelectItem value="OPERATIONS">Operations</SelectItem>
+                    <SelectItem value="PAYROLL">Payroll</SelectItem>
+                    <SelectItem value="OTHER">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="recurring"
+                    checked={formData.isRecurring}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, isRecurring: !!checked })
+                    }
+                  />
+                  <label
+                    htmlFor="recurring"
+                    className="text-sm font-medium cursor-pointer"
+                  >
+                    Recurring
+                  </label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-[140px_1fr_1fr] gap-4 items-start">
+                <label className="text-sm font-medium pt-2">Project</label>
+                <Select
+                  value={formData.projectId}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, projectId: value })
+                  }
+                  disabled={!!defaultProjectId}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select project" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {projects.map((project) => (
+                      <SelectItem key={project.id} value={project.id}>
+                        {project.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={formData.freelancerId}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, freelancerId: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Freelancer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {freelancers.map((freelancer) => (
+                      <SelectItem key={freelancer.id} value={freelancer.id}>
+                        {freelancer.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-            )}
-          </div>
-
-          {/* Message */}
-          {message && (
-            <div
-              className={`p-3 rounded ${
-                message.type === 'success'
-                  ? 'bg-green-50 text-green-700'
-                  : 'bg-red-50 text-red-700'
-              }`}
-            >
-              {message.text}
             </div>
-          )}
 
-          {/* Buttons */}
-          <div className="flex gap-4">
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Expense'}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.back()}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+            {/* Amount & Currency */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Amount
+              </h3>
+
+              <div className="grid grid-cols-[140px_1fr_1fr] gap-4 items-start">
+                <label className="text-sm font-medium pt-2">
+                  Amount <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.amount}
+                  onChange={(e) =>
+                    setFormData({ ...formData, amount: e.target.value })
+                  }
+                  placeholder="0.00"
+                  required
+                />
+                <Select
+                  value={formData.currency}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, currency: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                    <SelectItem value="GBP">GBP</SelectItem>
+                    <SelectItem value="EGP">EGP</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {formData.currency !== 'USD' && (
+                <div className="grid grid-cols-[140px_1fr] gap-4 items-start">
+                  <label className="text-sm font-medium pt-2">
+                    Exchange Rate
+                  </label>
+                  <Input
+                    type="number"
+                    step="0.0001"
+                    value={formData.exchangeRate}
+                    onChange={(e) =>
+                      setFormData({ ...formData, exchangeRate: e.target.value })
+                    }
+                    placeholder="1.0000"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Dates & Status */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Dates & Status
+              </h3>
+
+              <div className="grid grid-cols-[140px_1fr_1fr] gap-4 items-start">
+                <label className="text-sm font-medium pt-2">
+                  Expense Date <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  type="date"
+                  value={formData.expenseDate}
+                  onChange={(e) =>
+                    setFormData({ ...formData, expenseDate: e.target.value })
+                  }
+                  required
+                />
+                <Select
+                  value={formData.paymentStatus}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, paymentStatus: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PENDING">Pending</SelectItem>
+                    <SelectItem value="PAID">Paid</SelectItem>
+                    <SelectItem value="OVERDUE">Overdue</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {formData.paymentStatus === 'PAID' && (
+                <div className="grid grid-cols-[140px_1fr] gap-4 items-start">
+                  <label className="text-sm font-medium pt-2">
+                    Payment Date
+                  </label>
+                  <Input
+                    type="date"
+                    value={formData.paymentDate}
+                    onChange={(e) =>
+                      setFormData({ ...formData, paymentDate: e.target.value })
+                    }
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Optional Details */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                Additional Details (Optional)
+              </h3>
+
+              <div className="grid grid-cols-[140px_1fr] gap-4 items-start">
+                <label className="text-sm font-medium pt-2">Bank Account</label>
+                <Input
+                  value={formData.bankAccount}
+                  onChange={(e) =>
+                    setFormData({ ...formData, bankAccount: e.target.value })
+                  }
+                  placeholder="e.g., PayPal, Bank Transfer"
+                />
+              </div>
+
+              <div className="grid grid-cols-[140px_1fr_1fr] gap-4 items-start">
+                <label className="text-sm font-medium pt-2">Deductions</label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.taxAmount}
+                  onChange={(e) =>
+                    setFormData({ ...formData, taxAmount: e.target.value })
+                  }
+                  placeholder="Tax Amount"
+                />
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={formData.withholdingAmount}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      withholdingAmount: e.target.value,
+                    })
+                  }
+                  placeholder="Withholding"
+                />
+              </div>
+
+              {formData.isRecurring && (
+                <div className="grid grid-cols-[140px_1fr] gap-4 items-start">
+                  <label className="text-sm font-medium pt-2">
+                    Recurring Period
+                  </label>
+                  <Input
+                    value={formData.recurringPeriod}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        recurringPeriod: e.target.value,
+                      })
+                    }
+                    placeholder="e.g., Monthly, Yearly"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Message */}
+            {message && (
+              <div
+                className={`p-3 rounded-md text-sm ${
+                  message.type === 'success'
+                    ? 'bg-green-50 text-green-800 border border-green-200'
+                    : 'bg-red-50 text-red-800 border border-red-200'
+                }`}
+              >
+                {message.text}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3 pt-4 border-t">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.back()}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Create Expense
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
