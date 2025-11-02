@@ -8,15 +8,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import {
-  Filter,
-  X,
-  Calendar,
-  Briefcase,
-  Receipt,
-  DollarSign,
-  User,
-} from 'lucide-react';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { Filter, X, Briefcase, Receipt, DollarSign, User } from 'lucide-react';
+import { DateRange } from 'react-day-picker';
+import { format } from 'date-fns';
 
 type Project = {
   id: string;
@@ -38,9 +33,23 @@ export function ExpenseFilters({ projects, freelancers }: ExpenseFiltersProps) {
   const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
 
+  // Initialize date range from URL params
+  const initDateRange = (): DateRange | undefined => {
+    const start = searchParams.get('startDate');
+    const end = searchParams.get('endDate');
+    if (start && end) {
+      return {
+        from: new Date(start),
+        to: new Date(end),
+      };
+    }
+    return undefined;
+  };
+
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(
+    initDateRange()
+  );
   const [filters, setFilters] = useState({
-    startDate: searchParams.get('startDate') || '',
-    endDate: searchParams.get('endDate') || '',
     status: searchParams.get('status') || '',
     category: searchParams.get('category') || '',
     projectId: searchParams.get('projectId') || '',
@@ -48,8 +57,7 @@ export function ExpenseFilters({ projects, freelancers }: ExpenseFiltersProps) {
   });
 
   const hasActiveFilters =
-    filters.startDate ||
-    filters.endDate ||
+    dateRange ||
     filters.status ||
     filters.category ||
     filters.projectId ||
@@ -57,8 +65,12 @@ export function ExpenseFilters({ projects, freelancers }: ExpenseFiltersProps) {
 
   const applyFilters = () => {
     const params = new URLSearchParams();
-    if (filters.startDate) params.set('startDate', filters.startDate);
-    if (filters.endDate) params.set('endDate', filters.endDate);
+    if (dateRange?.from) {
+      params.set('startDate', format(dateRange.from, 'yyyy-MM-dd'));
+    }
+    if (dateRange?.to) {
+      params.set('endDate', format(dateRange.to, 'yyyy-MM-dd'));
+    }
     if (filters.status) params.set('status', filters.status);
     if (filters.category) params.set('category', filters.category);
     if (filters.projectId) params.set('projectId', filters.projectId);
@@ -69,9 +81,8 @@ export function ExpenseFilters({ projects, freelancers }: ExpenseFiltersProps) {
   };
 
   const clearFilters = () => {
+    setDateRange(undefined);
     setFilters({
-      startDate: '',
-      endDate: '',
       status: '',
       category: '',
       projectId: '',
@@ -81,11 +92,29 @@ export function ExpenseFilters({ projects, freelancers }: ExpenseFiltersProps) {
     setOpen(false);
   };
 
-  const removeFilter = (key: keyof typeof filters) => {
+  const removeFilter = (key: keyof typeof filters | 'dateRange') => {
+    if (key === 'dateRange') {
+      setDateRange(undefined);
+      const params = new URLSearchParams();
+      if (filters.status) params.set('status', filters.status);
+      if (filters.category) params.set('category', filters.category);
+      if (filters.projectId) params.set('projectId', filters.projectId);
+      if (filters.freelancerId)
+        params.set('freelancerId', filters.freelancerId);
+      router.push(`/dashboard/expenses?${params.toString()}`);
+      return;
+    }
+
     const newFilters = { ...filters, [key]: '' };
     setFilters(newFilters);
 
     const params = new URLSearchParams();
+    if (dateRange?.from) {
+      params.set('startDate', format(dateRange.from, 'yyyy-MM-dd'));
+    }
+    if (dateRange?.to) {
+      params.set('endDate', format(dateRange.to, 'yyyy-MM-dd'));
+    }
     Object.entries(newFilters).forEach(([k, v]) => {
       if (v) params.set(k, v);
     });
@@ -94,9 +123,6 @@ export function ExpenseFilters({ projects, freelancers }: ExpenseFiltersProps) {
   };
 
   const getFilterLabel = (key: keyof typeof filters, value: string) => {
-    if (key === 'startDate')
-      return `From: ${new Date(value).toLocaleDateString()}`;
-    if (key === 'endDate') return `To: ${new Date(value).toLocaleDateString()}`;
     if (key === 'status') return value;
     if (key === 'category') return value;
     if (key === 'projectId') {
@@ -137,30 +163,15 @@ export function ExpenseFilters({ projects, freelancers }: ExpenseFiltersProps) {
 
             {/* Date Range */}
             <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                <Calendar className="h-3 w-3" />
+              <label className="text-xs font-medium text-muted-foreground">
                 Date Range
               </label>
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="date"
-                  value={filters.startDate}
-                  onChange={(e) =>
-                    setFilters({ ...filters, startDate: e.target.value })
-                  }
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  placeholder="Start"
-                />
-                <input
-                  type="date"
-                  value={filters.endDate}
-                  onChange={(e) =>
-                    setFilters({ ...filters, endDate: e.target.value })
-                  }
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  placeholder="End"
-                />
-              </div>
+              <DateRangePicker
+                dateRange={dateRange}
+                onDateRangeChange={setDateRange}
+                placeholder="Select date range"
+                className="w-full"
+              />
             </div>
 
             {/* Status */}
@@ -269,6 +280,18 @@ export function ExpenseFilters({ projects, freelancers }: ExpenseFiltersProps) {
       </Popover>
 
       {/* Active Filter Chips */}
+      {dateRange && (
+        <div className="inline-flex items-center gap-1 h-8 px-2.5 rounded-md bg-secondary text-secondary-foreground text-xs font-medium">
+          {dateRange.from && format(dateRange.from, 'MMM d, yyyy')}
+          {dateRange.to && ` - ${format(dateRange.to, 'MMM d, yyyy')}`}
+          <button
+            onClick={() => removeFilter('dateRange')}
+            className="ml-1 rounded-sm opacity-70 hover:opacity-100 transition-opacity"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      )}
       {Object.entries(filters).map(
         ([key, value]) =>
           value && (

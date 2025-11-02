@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
   Select,
   SelectContent,
@@ -148,7 +149,7 @@ export function ExpenseForm({
     <div className="max-w-2xl mx-auto">
       <Card>
         <CardContent className="pt-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {/* Basic Information */}
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
@@ -318,13 +319,19 @@ export function ExpenseForm({
                 <label className="text-sm font-medium pt-2">
                   Expense Date <span className="text-red-500">*</span>
                 </label>
-                <Input
-                  type="date"
-                  value={formData.expenseDate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, expenseDate: e.target.value })
+                <DatePicker
+                  date={
+                    formData.expenseDate
+                      ? new Date(formData.expenseDate)
+                      : undefined
                   }
-                  required
+                  onDateChange={(date) =>
+                    setFormData({
+                      ...formData,
+                      expenseDate: date ? date.toISOString().split('T')[0] : '',
+                    })
+                  }
+                  placeholder="Select expense date"
                 />
                 <Select
                   value={formData.paymentStatus}
@@ -348,12 +355,21 @@ export function ExpenseForm({
                   <label className="text-sm font-medium pt-2">
                     Payment Date
                   </label>
-                  <Input
-                    type="date"
-                    value={formData.paymentDate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, paymentDate: e.target.value })
+                  <DatePicker
+                    date={
+                      formData.paymentDate
+                        ? new Date(formData.paymentDate)
+                        : undefined
                     }
+                    onDateChange={(date) =>
+                      setFormData({
+                        ...formData,
+                        paymentDate: date
+                          ? date.toISOString().split('T')[0]
+                          : '',
+                      })
+                    }
+                    placeholder="Select payment date"
                   />
                 </div>
               )}

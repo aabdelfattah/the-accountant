@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
   Select,
   SelectContent,
@@ -248,13 +249,19 @@ export function RevenueForm({ projects, defaultProjectId }: RevenueFormProps) {
                 <label className="text-sm font-medium pt-2">
                   Revenue Date <span className="text-red-500">*</span>
                 </label>
-                <Input
-                  type="date"
-                  value={formData.revenueDate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, revenueDate: e.target.value })
+                <DatePicker
+                  date={
+                    formData.revenueDate
+                      ? new Date(formData.revenueDate)
+                      : undefined
                   }
-                  required
+                  onDateChange={(date) =>
+                    setFormData({
+                      ...formData,
+                      revenueDate: date ? date.toISOString().split('T')[0] : '',
+                    })
+                  }
+                  placeholder="Select revenue date"
                 />
                 <Select
                   value={formData.paymentStatus}
@@ -278,12 +285,21 @@ export function RevenueForm({ projects, defaultProjectId }: RevenueFormProps) {
                   <label className="text-sm font-medium pt-2">
                     Invoice Date
                   </label>
-                  <Input
-                    type="date"
-                    value={formData.invoiceDate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, invoiceDate: e.target.value })
+                  <DatePicker
+                    date={
+                      formData.invoiceDate
+                        ? new Date(formData.invoiceDate)
+                        : undefined
                     }
+                    onDateChange={(date) =>
+                      setFormData({
+                        ...formData,
+                        invoiceDate: date
+                          ? date.toISOString().split('T')[0]
+                          : '',
+                      })
+                    }
+                    placeholder="Select invoice date"
                   />
                   <Input
                     type="date"
@@ -301,12 +317,21 @@ export function RevenueForm({ projects, defaultProjectId }: RevenueFormProps) {
                   <label className="text-sm font-medium pt-2">
                     Payment Date
                   </label>
-                  <Input
-                    type="date"
-                    value={formData.paymentDate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, paymentDate: e.target.value })
+                  <DatePicker
+                    date={
+                      formData.paymentDate
+                        ? new Date(formData.paymentDate)
+                        : undefined
                     }
+                    onDateChange={(date) =>
+                      setFormData({
+                        ...formData,
+                        paymentDate: date
+                          ? date.toISOString().split('T')[0]
+                          : '',
+                      })
+                    }
+                    placeholder="Select payment date"
                   />
                 </div>
               )}

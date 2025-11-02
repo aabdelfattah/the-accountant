@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
   Select,
   SelectContent,
@@ -284,28 +285,40 @@ export default function EditProjectPage({
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="startDate">Start Date (Optional)</Label>
-                <Input
-                  id="startDate"
-                  type="date"
-                  value={formData.startDate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, startDate: e.target.value })
-                  }
-                />
-              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="startDate">Start Date</Label>
+                  <DatePicker
+                    date={
+                      formData.startDate
+                        ? new Date(formData.startDate)
+                        : undefined
+                    }
+                    onDateChange={(date) =>
+                      setFormData({
+                        ...formData,
+                        startDate: date ? date.toISOString().split('T')[0] : '',
+                      })
+                    }
+                    placeholder="Select start date"
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="endDate">End Date (Optional)</Label>
-                <Input
-                  id="endDate"
-                  type="date"
-                  value={formData.endDate}
-                  onChange={(e) =>
-                    setFormData({ ...formData, endDate: e.target.value })
-                  }
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="endDate">End Date</Label>
+                  <DatePicker
+                    date={
+                      formData.endDate ? new Date(formData.endDate) : undefined
+                    }
+                    onDateChange={(date) =>
+                      setFormData({
+                        ...formData,
+                        endDate: date ? date.toISOString().split('T')[0] : '',
+                      })
+                    }
+                    placeholder="Select end date"
+                  />
+                </div>
               </div>
             </div>
 

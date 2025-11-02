@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { DatePicker } from '@/components/ui/date-picker';
 import {
   Select,
   SelectContent,
@@ -14,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -246,14 +248,28 @@ export default function NewProjectPage() {
                       <SelectItem value="ARCHIVED">Archived</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Input
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, startDate: e.target.value })
-                    }
-                    placeholder="Start Date"
-                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="startDate">Start Date</Label>
+                    <DatePicker
+                      date={
+                        formData.startDate
+                          ? new Date(formData.startDate)
+                          : undefined
+                      }
+                      onDateChange={(date) =>
+                        setFormData({
+                          ...formData,
+                          startDate: date
+                            ? date.toISOString().split('T')[0]
+                            : '',
+                        })
+                      }
+                      placeholder="Select start date"
+                    />
+                  </div>
                 </div>
               </div>
 
