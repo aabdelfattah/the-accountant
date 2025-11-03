@@ -36,6 +36,12 @@ const navItems: NavItem[] = [
     roles: ['USER', 'ACCOUNTANT', 'ADMIN'],
   },
   {
+    title: 'Clients',
+    href: '/dashboard/clients',
+    icon: Users,
+    roles: ['USER', 'ACCOUNTANT', 'ADMIN'],
+  },
+  {
     title: 'Revenue',
     href: '/dashboard/revenues',
     icon: DollarSign,

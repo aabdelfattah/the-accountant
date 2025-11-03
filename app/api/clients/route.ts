@@ -57,9 +57,7 @@ export async function GET(request: NextRequest) {
 
     const clients = await prisma.client.findMany({
       where,
-      orderBy: {
-        name: 'asc',
-      },
+      orderBy: { name: 'asc' },
       include: {
         projects: {
           select: {
@@ -157,16 +155,9 @@ export async function POST(request: NextRequest) {
     // Create the client
     const client = await prisma.client.create({
       data: {
-        name: data.name,
-        email: data.email || null,
-        phoneNumber: data.phoneNumber,
-        billingAddress: data.billingAddress,
-        paymentTerms: data.paymentTerms,
-        active: data.active,
-        receivableAccountId,
-      },
-      include: {
-        projects: true,
+        name: body.name,
+        email: body.email || null,
+        active: true,
       },
     });
 

@@ -23,6 +23,11 @@ type Project = {
   name: string;
   clientName: string;
   clientId: string | null;
+  client?: {
+    id: string;
+    name: string;
+    email: string | null;
+  } | null;
   description: string | null;
   status: string;
   startDate: string | null;
@@ -69,7 +74,7 @@ export default function EditProjectPage({
           setFormData({
             name: projectData.name,
             clientName: projectData.clientName,
-            clientId: projectData.clientId || '',
+            clientId: projectData.client?.id || '',
             description: projectData.description || '',
             status: projectData.status,
             startDate: projectData.startDate
@@ -85,7 +90,7 @@ export default function EditProjectPage({
         const clientsRes = await fetch('/api/clients?active=true');
         if (clientsRes.ok) {
           const clientsData = await clientsRes.json();
-          setClients(clientsData.clients || []);
+          setClients(clientsData || []);
         }
       } catch (err) {
         console.error('Failed to fetch data:', err);

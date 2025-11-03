@@ -172,6 +172,36 @@ async function main() {
   });
   console.log('  ✓ Canva subscription: $120');
 
+  // ============================================
+  // INITIAL CLIENTS
+  // ============================================
+
+  console.log('\nCreating initial clients...');
+
+  const defaultClients = [
+    { name: 'Acme Corp', email: 'contact@acme.com' },
+    { name: 'Tech Solutions Inc', email: 'info@techsolutions.com' },
+    { name: 'Global Traders', email: 'hello@globaltraders.com' },
+  ];
+
+  for (const clientData of defaultClients) {
+    const existingClient = await prisma.client.findFirst({
+      where: { name: clientData.name },
+    });
+
+    if (!existingClient) {
+      const client = await prisma.client.create({
+        data: {
+          name: clientData.name,
+          email: clientData.email,
+          active: true,
+        },
+      });
+      console.log('Created client:', client.name);
+    }
+    console.log('Created client:', client.name);
+  }
+
   console.log(`\n✅ Seed completed successfully!`);
   console.log(`   - Created ${accountMap.size} accounts`);
   console.log(`   - Created 3 users (admin, accountant, user)`);

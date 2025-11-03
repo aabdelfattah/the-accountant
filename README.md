@@ -95,9 +95,14 @@ cp accounts.json.example accounts.json
 # Push the schema to database
 npm run db:push
 
+# Initialize database indexes (sparse unique indexes for journal entries)
+npm run db:init
+
 # Seed with initial data (chart of accounts and demo users)
 npm run db:seed
 ```
+
+**Note:** The `db:init` command creates sparse unique indexes that Prisma doesn't support natively. See [scripts/README.md](./scripts/README.md) for details.
 
 6. Start the development server:
 
@@ -209,6 +214,9 @@ The system uses double-entry bookkeeping. All user transactions automatically ge
 ```bash
 # Push schema changes to database
 npm run db:push
+
+# Initialize database indexes (run after db:push or on new environments)
+npm run db:init
 
 # Open Prisma Studio (database GUI)
 npm run db:studio

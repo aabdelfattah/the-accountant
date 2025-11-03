@@ -193,7 +193,7 @@ model Revenue {
   paymentDate       DateTime?
   dueDate           DateTime?
 
-  paymentStatus     String         @default("UNBILLED") // UNBILLED, PENDING, PAID, OVERDUE
+  paymentStatus     String         @default("UNBILLED") // UNBILLED, INVOICED, PAID, OVERDUE
   bankAccount       String?
 
   // Tax information
@@ -204,7 +204,7 @@ model Revenue {
   user              User           @relation(fields: [userId], references: [id])
 
   // Journal entry reference (one-to-one when paid)
-  journalEntryId    String?        @unique @db.ObjectId
+  journalEntryId    String?        @db.ObjectId
   journalEntry      JournalEntry?  @relation("RevenueJournalEntry", fields: [journalEntryId], references: [id])
 
   createdAt         DateTime       @default(now())
@@ -240,7 +240,7 @@ model Expense {
   paymentDate       DateTime?
   dueDate           DateTime?
 
-  paymentStatus     String          @default("PAID")
+  paymentStatus     String          @default("PENDING") // PENDING, INVOICED, PAID
   bankAccount       String?
 
   // Tax information
@@ -255,7 +255,7 @@ model Expense {
   user              User            @relation(fields: [userId], references: [id])
 
   // Journal entry reference (one-to-one when paid)
-  journalEntryId    String?         @unique @db.ObjectId
+  journalEntryId    String?         @db.ObjectId
   journalEntry      JournalEntry?   @relation("ExpenseJournalEntry", fields: [journalEntryId], references: [id])
 
   createdAt         DateTime        @default(now())
@@ -281,8 +281,10 @@ model JournalEntry {
   projectId       String?             @db.ObjectId
   project         Project?            @relation(fields: [projectId], references: [id])
 
-  revenue         Revenue?            @relation("RevenueJournalEntry")
-  expense         Expense?            @relation("ExpenseJournalEntry")
+  // Note: These are logically one-to-one relations (enforced by business logic)
+  // Using one-to-many in schema to avoid MongoDB unique index issues with null values
+  revenues        Revenue[]           @relation("RevenueJournalEntry")
+  expenses        Expense[]           @relation("ExpenseJournalEntry")
 
   // Status
   posted          Boolean             @default(true)
