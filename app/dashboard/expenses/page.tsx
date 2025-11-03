@@ -285,7 +285,7 @@ export default async function ExpensesPage({
                       <TableCell>
                         {expense.project ? (
                           <Link
-                            href={`/dashboard/projects/${expense.project.id}`}
+                            href={`/dashboard/client-accounts/${expense.project.id}`}
                             className="text-blue-600 hover:text-blue-800 font-medium hover:underline"
                           >
                             {expense.project.name}

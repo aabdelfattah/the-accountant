@@ -14,7 +14,7 @@ const updateProjectSchema = z.object({
   endDate: z.string().optional().nullable(),
 });
 
-// GET /api/projects/[id] - Get a specific project
+// GET /api/client-accounts/[id] - Get a specific project
 export async function GET(
   _request: NextRequest,
   { params }: { params: { id: string } }
@@ -83,7 +83,7 @@ export async function GET(
   }
 }
 
-// PATCH /api/projects/[id] - Update a project
+// PATCH /api/client-accounts/[id] - Update a project
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -171,7 +171,7 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/projects/[id] - Delete a project
+// DELETE /api/client-accounts/[id] - Delete a project
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: { id: string } }

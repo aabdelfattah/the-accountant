@@ -55,7 +55,7 @@ export default async function NewExpensePage({
         <Link
           href={
             searchParams.projectId
-              ? `/dashboard/projects/${searchParams.projectId}`
+              ? `/dashboard/client-accounts/${searchParams.projectId}`
               : '/dashboard/expenses'
           }
         >

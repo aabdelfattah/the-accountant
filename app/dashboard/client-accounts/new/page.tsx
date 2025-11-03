@@ -25,7 +25,7 @@ type Client = {
   email: string | null;
 };
 
-export default function NewProjectPage() {
+export default function NewClientAccountPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -80,7 +80,7 @@ export default function NewProjectPage() {
         createCogsAccount: formData.createCogsAccount,
       };
 
-      const response = await fetch('/api/projects', {
+      const response = await fetch('/api/client-accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -89,12 +89,14 @@ export default function NewProjectPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create project');
+        throw new Error(data.error || 'Failed to create client account');
       }
 
-      router.push('/dashboard/projects');
+      router.push('/dashboard/client-accounts');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create project');
+      setError(
+        err instanceof Error ? err.message : 'Failed to create client account'
+      );
     } finally {
       setLoading(false);
     }
@@ -113,15 +115,15 @@ export default function NewProjectPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/projects">
+        <Link href="/dashboard/client-accounts">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">New Project</h1>
+          <h1 className="text-3xl font-bold">New Client Account</h1>
           <p className="text-muted-foreground">
-            Create a new project with auto-generated accounts
+            Create a new client account with auto-generated accounting structure
           </p>
         </div>
       </div>
@@ -144,10 +146,10 @@ export default function NewProjectPage() {
 
                 <div className="grid grid-cols-[140px_1fr] gap-4 items-start">
                   <label className="text-sm font-medium pt-2">
-                    Project Name <span className="text-red-500">*</span>
+                    Account Name <span className="text-red-500">*</span>
                   </label>
                   <Input
-                    placeholder="e.g., Website Redesign 2024"
+                    placeholder="e.g., Acme Corp - Website Redesign"
                     value={formData.name}
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
@@ -161,7 +163,7 @@ export default function NewProjectPage() {
                     Description
                   </label>
                   <Textarea
-                    placeholder="Brief description of the project"
+                    placeholder="Brief description of the client account"
                     value={formData.description}
                     onChange={(e) =>
                       setFormData({ ...formData, description: e.target.value })
@@ -303,7 +305,7 @@ export default function NewProjectPage() {
                           Revenue Account (4xxx)
                         </label>
                         <p className="text-xs text-muted-foreground">
-                          For project income tracking
+                          For tracking income from this account
                         </p>
                       </div>
                     </div>
@@ -327,7 +329,7 @@ export default function NewProjectPage() {
                           COGS Account (5xxx)
                         </label>
                         <p className="text-xs text-muted-foreground">
-                          For project cost tracking
+                          For tracking costs for this account
                         </p>
                       </div>
                     </div>
@@ -338,7 +340,7 @@ export default function NewProjectPage() {
               <div className="flex gap-2 pt-4 border-t">
                 <Button type="submit" disabled={loading}>
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {loading ? 'Creating...' : 'Create Project'}
+                  {loading ? 'Creating...' : 'Create Client Account'}
                 </Button>
                 <Button
                   type="button"

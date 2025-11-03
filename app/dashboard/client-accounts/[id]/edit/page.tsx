@@ -40,7 +40,7 @@ type Client = {
   email: string | null;
 };
 
-export default function EditProjectPage({
+export default function EditClientAccountPage({
   params,
 }: {
   params: { id: string };
@@ -67,7 +67,7 @@ export default function EditProjectPage({
     const fetchData = async () => {
       try {
         // Fetch project
-        const projectRes = await fetch(`/api/projects/${params.id}`);
+        const projectRes = await fetch(`/api/client-accounts/${params.id}`);
         if (projectRes.ok) {
           const projectData = await projectRes.json();
           setProject(projectData);
@@ -90,7 +90,7 @@ export default function EditProjectPage({
         const clientsRes = await fetch('/api/clients?active=true');
         if (clientsRes.ok) {
           const clientsData = await clientsRes.json();
-          setClients(clientsData || []);
+          setClients(clientsData.clients || []);
         }
       } catch (err) {
         console.error('Failed to fetch data:', err);
@@ -118,7 +118,7 @@ export default function EditProjectPage({
         ...(formData.endDate && { endDate: formData.endDate }),
       };
 
-      const response = await fetch(`/api/projects/${params.id}`, {
+      const response = await fetch(`/api/client-accounts/${params.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -127,12 +127,14 @@ export default function EditProjectPage({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to update project');
+        throw new Error(data.error || 'Failed to update client account');
       }
 
-      router.push(`/dashboard/projects/${params.id}`);
+      router.push(`/dashboard/client-accounts/${params.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update project');
+      setError(
+        err instanceof Error ? err.message : 'Failed to update client account'
+      );
     } finally {
       setLoading(false);
     }
@@ -151,13 +153,13 @@ export default function EditProjectPage({
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Link href={`/dashboard/projects/${params.id}`}>
+          <Link href={`/dashboard/client-accounts/${params.id}`}>
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold">Edit Project</h1>
+            <h1 className="text-3xl font-bold">Edit Client Account</h1>
             <p className="text-muted-foreground">Loading...</p>
           </div>
         </div>
@@ -169,15 +171,15 @@ export default function EditProjectPage({
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Link href="/dashboard/projects">
+          <Link href="/dashboard/client-accounts">
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold">Project Not Found</h1>
+            <h1 className="text-3xl font-bold">Client Account Not Found</h1>
             <p className="text-muted-foreground">
-              {"The project you're looking for doesn't exist."}
+              {"The client account you're looking for doesn't exist."}
             </p>
           </div>
         </div>
@@ -188,20 +190,20 @@ export default function EditProjectPage({
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href={`/dashboard/projects/${params.id}`}>
+        <Link href={`/dashboard/client-accounts/${params.id}`}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">Edit Project</h1>
-          <p className="text-muted-foreground">Update project details</p>
+          <h1 className="text-3xl font-bold">Edit Client Account</h1>
+          <p className="text-muted-foreground">Update client account details</p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Project Details</CardTitle>
+          <CardTitle>Client Account Details</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -212,7 +214,7 @@ export default function EditProjectPage({
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="name">Project Name *</Label>
+              <Label htmlFor="name">Account Name *</Label>
               <Input
                 id="name"
                 value={formData.name}
@@ -331,7 +333,7 @@ export default function EditProjectPage({
               <Button type="submit" disabled={loading}>
                 {loading ? 'Saving...' : 'Save Changes'}
               </Button>
-              <Link href={`/dashboard/projects/${params.id}`}>
+              <Link href={`/dashboard/client-accounts/${params.id}`}>
                 <Button type="button" variant="outline">
                   Cancel
                 </Button>

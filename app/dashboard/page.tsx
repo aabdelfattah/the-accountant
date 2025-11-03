@@ -16,7 +16,7 @@ export default async function DashboardPage() {
       title: 'Projects',
       description: 'Manage your projects',
       icon: FolderKanban,
-      href: '/dashboard/projects',
+      href: '/dashboard/client-accounts',
       roles: ['USER', 'ACCOUNTANT', 'ADMIN'],
     },
     {

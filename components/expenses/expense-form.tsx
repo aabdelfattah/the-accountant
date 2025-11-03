@@ -130,7 +130,7 @@ export function ExpenseForm({
 
       setTimeout(() => {
         if (formData.projectId && formData.projectId !== 'none') {
-          router.push(`/dashboard/projects/${formData.projectId}`);
+          router.push(`/dashboard/client-accounts/${formData.projectId}`);
         } else {
           router.push('/dashboard/expenses');
         }

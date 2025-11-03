@@ -199,7 +199,6 @@ async function main() {
       });
       console.log('Created client:', client.name);
     }
-    console.log('Created client:', client.name);
   }
 
   console.log(`\n✅ Seed completed successfully!`);

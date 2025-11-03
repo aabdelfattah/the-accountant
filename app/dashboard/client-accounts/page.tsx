@@ -12,7 +12,7 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 
-export default async function ProjectsPage() {
+export default async function ClientAccountsPage() {
   const session = await auth();
 
   if (!session?.user) {
@@ -62,15 +62,15 @@ export default async function ProjectsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Projects</h1>
+          <h1 className="text-3xl font-bold">Client Accounts</h1>
           <p className="text-muted-foreground">
-            Manage your projects and track revenue/expenses
+            Manage client accounts and track revenue/expenses
           </p>
         </div>
-        <Link href="/dashboard/projects/new">
+        <Link href="/dashboard/client-accounts/new">
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            New Project
+            New Client Account
           </Button>
         </Link>
       </div>
@@ -79,7 +79,7 @@ export default async function ProjectsPage() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Total Projects</CardDescription>
+            <CardDescription>Total Accounts</CardDescription>
             <CardTitle className="text-3xl">{projects.length}</CardTitle>
           </CardHeader>
         </Card>
@@ -109,22 +109,23 @@ export default async function ProjectsPage() {
         </Card>
       </div>
 
-      {/* Projects List */}
+      {/* Client Accounts List */}
       <Card>
         <CardHeader>
-          <CardTitle>All Projects ({projects.length})</CardTitle>
-          <CardDescription>View and manage all your projects</CardDescription>
+          <CardTitle>All Client Accounts ({projects.length})</CardTitle>
+          <CardDescription>View and manage all client accounts</CardDescription>
         </CardHeader>
         <CardContent>
           {projects.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground mb-4">
-                No projects yet. Create your first project to get started.
+                No client accounts yet. Create your first account to get
+                started.
               </p>
-              <Link href="/dashboard/projects/new">
+              <Link href="/dashboard/client-accounts/new">
                 <Button>
                   <Plus className="mr-2 h-4 w-4" />
-                  Create Project
+                  Create Client Account
                 </Button>
               </Link>
             </div>
@@ -144,7 +145,7 @@ export default async function ProjectsPage() {
                 return (
                   <Link
                     key={project.id}
-                    href={`/dashboard/projects/${project.id}`}
+                    href={`/dashboard/client-accounts/${project.id}`}
                   >
                     <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
                       <CardContent className="pt-6">

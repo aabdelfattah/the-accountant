@@ -20,7 +20,7 @@ import { redirect, notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 
-export default async function ProjectDetailPage({
+export default async function ClientAccountDetailPage({
   params,
 }: {
   params: { id: string };
@@ -89,7 +89,7 @@ export default async function ProjectDetailPage({
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/dashboard/projects">
+        <Link href="/dashboard/client-accounts">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -107,8 +107,8 @@ export default async function ProjectDetailPage({
             {project.description || 'No description'}
           </p>
         </div>
-        <Link href={`/dashboard/projects/${project.id}/edit`}>
-          <Button variant="outline">Edit Project</Button>
+        <Link href={`/dashboard/client-accounts/${project.id}/edit`}>
+          <Button variant="outline">Edit Account</Button>
         </Link>
       </div>
 
@@ -222,7 +222,7 @@ export default async function ProjectDetailPage({
           <CardHeader>
             <CardTitle>Linked Accounts</CardTitle>
             <CardDescription>
-              Auto-generated accounts for this project
+              Auto-generated accounts for this client account
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -263,7 +263,7 @@ export default async function ProjectDetailPage({
           <CardHeader>
             <CardTitle>Team Members</CardTitle>
             <CardDescription>
-              Freelancers assigned to this project
+              Freelancers assigned to this client account
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -299,7 +299,7 @@ export default async function ProjectDetailPage({
             <div>
               <CardTitle>Recent Revenues</CardTitle>
               <CardDescription>
-                Latest revenue entries for this project
+                Latest revenue entries for this client account
               </CardDescription>
             </div>
             <Link href={`/dashboard/revenues/new?projectId=${project.id}`}>
@@ -346,7 +346,7 @@ export default async function ProjectDetailPage({
             <div>
               <CardTitle>Recent Expenses</CardTitle>
               <CardDescription>
-                Latest expense entries for this project
+                Latest expense entries for this client account
               </CardDescription>
             </div>
             <Link href={`/dashboard/expenses/new?projectId=${project.id}`}>

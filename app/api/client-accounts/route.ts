@@ -39,7 +39,7 @@ async function getNextAccountCode(parentCode: string): Promise<string> {
   return `${parentCode}${suffix + 1}`;
 }
 
-// GET /api/projects - List all projects
+// GET /api/client-accounts - List all projects
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/projects - Create a new project
+// POST /api/client-accounts - Create a new project
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();

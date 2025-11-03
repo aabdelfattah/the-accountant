@@ -248,7 +248,7 @@ export default async function RevenuesPage({
                       </TableCell>
                       <TableCell>
                         <Link
-                          href={`/dashboard/projects/${revenue.project.id}`}
+                          href={`/dashboard/client-accounts/${revenue.project.id}`}
                           className="text-blue-600 hover:text-blue-800 font-medium hover:underline"
                         >
                           {revenue.project.name}
@@ -282,7 +282,7 @@ export default async function RevenuesPage({
                       </TableCell>
                       <TableCell className="text-right">
                         <Link
-                          href={`/dashboard/projects/${revenue.project.id}`}
+                          href={`/dashboard/client-accounts/${revenue.project.id}`}
                         >
                           <Button variant="ghost" size="sm">
                             View

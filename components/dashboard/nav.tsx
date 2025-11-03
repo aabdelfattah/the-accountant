@@ -30,8 +30,8 @@ const navItems: NavItem[] = [
     roles: ['USER', 'ACCOUNTANT', 'ADMIN'],
   },
   {
-    title: 'Projects',
-    href: '/dashboard/projects',
+    title: 'Client Accounts',
+    href: '/dashboard/client-accounts',
     icon: FolderKanban,
     roles: ['USER', 'ACCOUNTANT', 'ADMIN'],
   },

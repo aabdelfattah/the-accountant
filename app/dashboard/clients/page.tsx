@@ -28,7 +28,7 @@ export default function ClientsPage() {
           throw new Error('Failed to fetch clients');
         }
         const data = await response.json();
-        setClients(data || []);
+        setClients(data.clients || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {

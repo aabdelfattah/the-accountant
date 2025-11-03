@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(clients);
+    return NextResponse.json({ clients });
   } catch (error) {
     console.error('Get clients error:', error);
     return NextResponse.json(

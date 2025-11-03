@@ -41,7 +41,7 @@ export default async function NewRevenuePage({
         <Link
           href={
             searchParams.projectId
-              ? `/dashboard/projects/${searchParams.projectId}`
+              ? `/dashboard/client-accounts/${searchParams.projectId}`
               : '/dashboard/revenues'
           }
         >
