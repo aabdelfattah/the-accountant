@@ -5,14 +5,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Plus, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
@@ -20,6 +12,7 @@ import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { RevenueFilters } from '@/components/revenues/revenue-filters';
+import { RevenueTable } from '@/components/revenues/revenue-table';
 
 type SearchParams = {
   startDate?: string;
@@ -224,76 +217,7 @@ export default async function RevenuesPage({
               )}
             </div>
           ) : (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/50">
-                    <TableHead className="font-semibold">Date</TableHead>
-                    <TableHead className="font-semibold">Project</TableHead>
-                    <TableHead className="font-semibold">Description</TableHead>
-                    <TableHead className="font-semibold">Status</TableHead>
-                    <TableHead className="text-right font-semibold">
-                      Amount
-                    </TableHead>
-                    <TableHead className="text-right font-semibold">
-                      Actions
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {revenues.map((revenue) => (
-                    <TableRow key={revenue.id} className="hover:bg-muted/50">
-                      <TableCell className="font-medium">
-                        {new Date(revenue.revenueDate).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <Link
-                          href={`/dashboard/client-accounts/${revenue.project.id}`}
-                          className="text-blue-600 hover:text-blue-800 font-medium hover:underline"
-                        >
-                          {revenue.project.name}
-                        </Link>
-                      </TableCell>
-                      <TableCell className="max-w-xs truncate">
-                        {revenue.description}
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            revenue.paymentStatus === 'PAID'
-                              ? 'bg-green-100 text-green-800'
-                              : revenue.paymentStatus === 'INVOICED'
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-orange-100 text-orange-800'
-                          }`}
-                        >
-                          {revenue.paymentStatus}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="font-semibold">
-                          ${revenue.convertedAmount.toLocaleString()}
-                        </div>
-                        {revenue.currency !== 'USD' && (
-                          <div className="text-xs text-muted-foreground">
-                            {revenue.currency} {revenue.amount.toLocaleString()}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Link
-                          href={`/dashboard/client-accounts/${revenue.project.id}`}
-                        >
-                          <Button variant="ghost" size="sm">
-                            View
-                          </Button>
-                        </Link>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <RevenueTable revenues={revenues} />
           )}
         </CardContent>
       </Card>

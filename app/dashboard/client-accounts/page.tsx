@@ -1,3 +1,5 @@
+'use client';
+
 import {
   Card,
   CardContent,
@@ -6,36 +8,48 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Calendar, DollarSign, Users } from 'lucide-react';
-import { auth } from '@/auth';
-import { redirect } from 'next/navigation';
-import { prisma } from '@/lib/prisma';
+import { Plus, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { EditableTable, Column } from '@/components/ui/editable-table';
 
-export default async function ClientAccountsPage() {
-  const session = await auth();
+type Project = {
+  id: string;
+  name: string;
+  clientName: string;
+  description: string | null;
+  status: string;
+  startDate: string | null;
+  client?: {
+    id: string;
+    name: string;
+  } | null;
+  revenues: { amount: number }[];
+  expenses: { amount: number }[];
+};
 
-  if (!session?.user) {
-    redirect('/login');
-  }
+export default function ClientAccountsPage() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch all projects with related data
-  const projects = await prisma.project.findMany({
-    orderBy: {
-      createdAt: 'desc',
-    },
-    include: {
-      client: true,
-      user: true,
-      revenues: true,
-      expenses: true,
-      projectFreelancers: {
-        include: {
-          freelancer: true,
-        },
-      },
-    },
-  });
+  // Fetch projects
+  useEffect(() => {
+    fetchProjects();
+  }, []);
+
+  const fetchProjects = async () => {
+    try {
+      const response = await fetch('/api/client-accounts');
+      if (response.ok) {
+        const data = await response.json();
+        setProjects(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch projects:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Calculate stats
   const activeProjects = projects.filter((p) => p.status === 'ACTIVE').length;
@@ -48,27 +62,150 @@ export default async function ClientAccountsPage() {
     0
   );
 
-  // Status badge styles
-  const getStatusBadge = (status: string) => {
-    const styles = {
-      ACTIVE: 'bg-green-100 text-green-700',
-      COMPLETED: 'bg-blue-100 text-blue-700',
-      ARCHIVED: 'bg-gray-100 text-gray-700',
-    };
-    return styles[status as keyof typeof styles] || styles.ACTIVE;
+  // Handle save
+  const handleSave = async (id: string, updatedData: Partial<Project>) => {
+    const response = await fetch(`/api/client-accounts/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: updatedData.name,
+        clientName: updatedData.clientName,
+        description: updatedData.description || null,
+        status: updatedData.status,
+        startDate: updatedData.startDate || null,
+      }),
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || 'Failed to save changes');
+    }
+
+    await fetchProjects(); // Refresh data
   };
+
+  // Define columns
+  const columns: Column<Project>[] = [
+    {
+      key: 'name',
+      header: 'Account Name',
+      width: 'w-[250px]',
+      type: 'text',
+      className: 'font-medium',
+      render: (row) => (
+        <Link
+          href={`/dashboard/client-accounts/${row.id}`}
+          className="text-blue-600 hover:text-blue-800 font-medium hover:underline"
+        >
+          {row.name}
+        </Link>
+      ),
+    },
+    {
+      key: 'clientName',
+      header: 'Client',
+      width: 'w-[180px]',
+      type: 'text',
+      render: (row) => row.client?.name || row.clientName,
+    },
+    {
+      key: 'description',
+      header: 'Description',
+      type: 'text',
+      className: 'max-w-xs truncate',
+      render: (row) =>
+        row.description || (
+          <span className="text-muted-foreground text-sm">—</span>
+        ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      width: 'w-[120px]',
+      type: 'select',
+      selectOptions: [
+        { value: 'ACTIVE', label: 'Active' },
+        { value: 'COMPLETED', label: 'Completed' },
+        { value: 'ARCHIVED', label: 'Archived' },
+      ],
+      render: (row) => {
+        const styles = {
+          ACTIVE: 'bg-green-100 text-green-800',
+          COMPLETED: 'bg-blue-100 text-blue-800',
+          ARCHIVED: 'bg-gray-100 text-gray-800',
+        };
+        const style =
+          styles[row.status as keyof typeof styles] || styles.ACTIVE;
+        return (
+          <span
+            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${style}`}
+          >
+            {row.status}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'startDate',
+      header: 'Start Date',
+      width: 'w-[110px]',
+      type: 'date',
+    },
+    {
+      key: 'revenues',
+      header: 'Revenue',
+      width: 'w-[130px]',
+      type: 'readonly',
+      editable: false,
+      className: 'text-right',
+      headerClassName: 'text-right',
+      render: (row) => {
+        const revenue = row.revenues.reduce((sum, r) => sum + r.amount, 0);
+        return (
+          <div className="font-semibold text-green-600">
+            ${revenue.toLocaleString()}
+          </div>
+        );
+      },
+    },
+    {
+      key: 'expenses',
+      header: 'Expenses',
+      width: 'w-[130px]',
+      type: 'readonly',
+      editable: false,
+      className: 'text-right',
+      headerClassName: 'text-right',
+      render: (row) => {
+        const expenses = row.expenses.reduce((sum, e) => sum + e.amount, 0);
+        return (
+          <div className="font-semibold text-red-600">
+            ${expenses.toLocaleString()}
+          </div>
+        );
+      },
+    },
+  ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Client Accounts</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-3xl font-bold tracking-tight">Client Accounts</h1>
+          <p className="text-muted-foreground mt-1">
             Manage client accounts and track revenue/expenses
           </p>
         </div>
         <Link href="/dashboard/client-accounts/new">
-          <Button>
+          <Button size="lg" className="shadow-sm">
             <Plus className="mr-2 h-4 w-4" />
             New Client Account
           </Button>
@@ -76,44 +213,57 @@ export default async function ClientAccountsPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total Accounts</CardDescription>
-            <CardTitle className="text-3xl">{projects.length}</CardTitle>
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card className="border-l-4 border-l-blue-500">
+          <CardHeader className="pb-3">
+            <CardDescription className="text-sm font-medium">
+              Total Accounts
+            </CardDescription>
+            <CardTitle className="text-3xl font-bold">
+              {projects.length}
+            </CardTitle>
           </CardHeader>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Active</CardDescription>
-            <CardTitle className="text-3xl text-green-600">
+        <Card className="border-l-4 border-l-green-500">
+          <CardHeader className="pb-3">
+            <CardDescription className="text-sm font-medium">
+              Active
+            </CardDescription>
+            <CardTitle className="text-3xl font-bold text-green-600">
               {activeProjects}
             </CardTitle>
           </CardHeader>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Total Revenue</CardDescription>
-            <CardTitle className="text-3xl">
+        <Card className="border-l-4 border-l-purple-500">
+          <CardHeader className="pb-3">
+            <CardDescription className="text-sm font-medium">
+              Total Revenue
+            </CardDescription>
+            <CardTitle className="text-3xl font-bold">
               ${totalRevenue.toLocaleString()}
             </CardTitle>
           </CardHeader>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Net Profit</CardDescription>
-            <CardTitle className="text-3xl text-blue-600">
+        <Card className="border-l-4 border-l-indigo-500">
+          <CardHeader className="pb-3">
+            <CardDescription className="text-sm font-medium">
+              Net Profit
+            </CardDescription>
+            <CardTitle className="text-3xl font-bold text-blue-600">
               ${(totalRevenue - totalExpenses).toLocaleString()}
             </CardTitle>
           </CardHeader>
         </Card>
       </div>
 
-      {/* Client Accounts List */}
-      <Card>
+      {/* Editable Table */}
+      <Card className="shadow-sm">
         <CardHeader>
-          <CardTitle>All Client Accounts ({projects.length})</CardTitle>
-          <CardDescription>View and manage all client accounts</CardDescription>
+          <CardTitle>All Client Accounts</CardTitle>
+          <CardDescription>
+            {projects.length} {projects.length === 1 ? 'account' : 'accounts'} •
+            Click edit to modify inline
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {projects.length === 0 ? (
@@ -130,94 +280,12 @@ export default async function ClientAccountsPage() {
               </Link>
             </div>
           ) : (
-            <div className="space-y-4">
-              {projects.map((project) => {
-                const projectRevenue = project.revenues.reduce(
-                  (sum, r) => sum + r.amount,
-                  0
-                );
-                const projectExpenses = project.expenses.reduce(
-                  (sum, e) => sum + e.amount,
-                  0
-                );
-                const projectProfit = projectRevenue - projectExpenses;
-
-                return (
-                  <Link
-                    key={project.id}
-                    href={`/dashboard/client-accounts/${project.id}`}
-                  >
-                    <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
-                      <CardContent className="pt-6">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <h3 className="text-lg font-semibold">
-                                {project.name}
-                              </h3>
-                              <span
-                                className={`text-xs px-2 py-0.5 rounded ${getStatusBadge(project.status)}`}
-                              >
-                                {project.status}
-                              </span>
-                            </div>
-
-                            <p className="text-sm text-muted-foreground mb-3">
-                              {project.description || 'No description'}
-                            </p>
-
-                            <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                              <div className="flex items-center gap-1">
-                                <Users className="h-4 w-4" />
-                                <span>
-                                  {project.client?.name || project.clientName}
-                                </span>
-                              </div>
-                              {project.startDate && (
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="h-4 w-4" />
-                                  <span>
-                                    {new Date(
-                                      project.startDate
-                                    ).toLocaleDateString()}
-                                  </span>
-                                </div>
-                              )}
-                              <div className="flex items-center gap-1">
-                                <DollarSign className="h-4 w-4" />
-                                <span>
-                                  {project.revenues.length} revenues,{' '}
-                                  {project.expenses.length} expenses
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="text-right ml-4">
-                            <div className="text-sm text-muted-foreground mb-1">
-                              Profit
-                            </div>
-                            <div
-                              className={`text-2xl font-bold ${
-                                projectProfit >= 0
-                                  ? 'text-green-600'
-                                  : 'text-red-600'
-                              }`}
-                            >
-                              ${projectProfit.toLocaleString()}
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-1">
-                              Revenue: ${projectRevenue.toLocaleString()} |
-                              Costs: ${projectExpenses.toLocaleString()}
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                );
-              })}
-            </div>
+            <EditableTable
+              data={projects}
+              columns={columns}
+              onSave={handleSave}
+              emptyMessage="No client accounts found"
+            />
           )}
         </CardContent>
       </Card>

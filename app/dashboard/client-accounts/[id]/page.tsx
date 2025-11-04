@@ -19,6 +19,8 @@ import { auth } from '@/auth';
 import { redirect, notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
+import { RevenueTable } from '@/components/revenues/revenue-table';
+import { ExpenseTable } from '@/components/expenses/expense-table';
 
 export default async function ClientAccountDetailPage({
   params,
@@ -316,25 +318,10 @@ export default async function ClientAccountDetailPage({
               No revenues recorded yet
             </p>
           ) : (
-            <div className="space-y-2">
-              {project.revenues.slice(0, 5).map((revenue) => (
-                <div
-                  key={revenue.id}
-                  className="flex items-center justify-between p-3 border rounded-lg"
-                >
-                  <div>
-                    <p className="font-medium">{revenue.description}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(revenue.revenueDate).toLocaleDateString()} •{' '}
-                      {revenue.paymentStatus}
-                    </p>
-                  </div>
-                  <p className="font-semibold text-green-600">
-                    ${revenue.amount.toLocaleString()}
-                  </p>
-                </div>
-              ))}
-            </div>
+            <RevenueTable
+              revenues={project.revenues.slice(0, 10)}
+              variant="simple"
+            />
           )}
         </CardContent>
       </Card>
@@ -363,25 +350,10 @@ export default async function ClientAccountDetailPage({
               No expenses recorded yet
             </p>
           ) : (
-            <div className="space-y-2">
-              {project.expenses.slice(0, 5).map((expense) => (
-                <div
-                  key={expense.id}
-                  className="flex items-center justify-between p-3 border rounded-lg"
-                >
-                  <div>
-                    <p className="font-medium">{expense.description}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(expense.expenseDate).toLocaleDateString()} •{' '}
-                      {expense.category}
-                    </p>
-                  </div>
-                  <p className="font-semibold text-red-600">
-                    ${expense.amount.toLocaleString()}
-                  </p>
-                </div>
-              ))}
-            </div>
+            <ExpenseTable
+              expenses={project.expenses.slice(0, 10)}
+              variant="simple"
+            />
           )}
         </CardContent>
       </Card>

@@ -5,14 +5,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Plus, Receipt, TrendingDown } from 'lucide-react';
 import Link from 'next/link';
@@ -20,6 +12,7 @@ import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { ExpenseFilters } from '@/components/expenses/expense-filters';
+import { ExpenseTable } from '@/components/expenses/expense-table';
 
 type SearchParams = {
   startDate?: string;
@@ -253,88 +246,7 @@ export default async function ExpensesPage({
               )}
             </div>
           ) : (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/50">
-                    <TableHead className="font-semibold">Date</TableHead>
-                    <TableHead className="font-semibold">Description</TableHead>
-                    <TableHead className="font-semibold">Category</TableHead>
-                    <TableHead className="font-semibold">Project</TableHead>
-                    <TableHead className="font-semibold">Freelancer</TableHead>
-                    <TableHead className="font-semibold">Status</TableHead>
-                    <TableHead className="text-right font-semibold">
-                      Amount
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {expenses.map((expense) => (
-                    <TableRow key={expense.id} className="hover:bg-muted/50">
-                      <TableCell className="font-medium">
-                        {new Date(expense.expenseDate).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="max-w-xs truncate">
-                        {expense.description}
-                      </TableCell>
-                      <TableCell>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                          {expense.category}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        {expense.project ? (
-                          <Link
-                            href={`/dashboard/client-accounts/${expense.project.id}`}
-                            className="text-blue-600 hover:text-blue-800 font-medium hover:underline"
-                          >
-                            {expense.project.name}
-                          </Link>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">
-                            —
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {expense.freelancer ? (
-                          <span className="text-sm font-medium">
-                            {expense.freelancer.name}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">
-                            —
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            expense.paymentStatus === 'PAID'
-                              ? 'bg-green-100 text-green-800'
-                              : expense.paymentStatus === 'OVERDUE'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-orange-100 text-orange-800'
-                          }`}
-                        >
-                          {expense.paymentStatus}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="font-semibold">
-                          ${expense.convertedAmount.toLocaleString()}
-                        </div>
-                        {expense.currency !== 'USD' && (
-                          <div className="text-xs text-muted-foreground">
-                            {expense.currency} {expense.amount.toLocaleString()}
-                          </div>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <ExpenseTable expenses={expenses} />
           )}
         </CardContent>
       </Card>
