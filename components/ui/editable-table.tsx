@@ -257,10 +257,9 @@ export function EditableTable<T extends { id: string }>({
                         size="sm"
                         variant="ghost"
                         onClick={() => handleEdit(row)}
-                        className="h-8"
+                        className="h-8 w-8 p-0"
                       >
-                        <Pencil className="h-3 w-3 mr-1" />
-                        Edit
+                        <Pencil className="h-3 w-3" />
                       </Button>
                     </div>
                   )}
