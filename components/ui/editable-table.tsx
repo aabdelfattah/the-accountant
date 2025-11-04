@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Save, X, Pencil, Loader2 } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
 
 export type ColumnType =
   | 'text'
@@ -175,7 +176,7 @@ export function EditableTable<T extends { id: string }>({
 
     // Default display
     if (column.type === 'date' && value) {
-      return new Date(value as any).toLocaleDateString();
+      return formatDate(value as Date | string);
     }
 
     return value !== null && value !== undefined ? String(value) : '—';

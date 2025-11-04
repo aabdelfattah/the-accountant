@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { EditableTable, Column } from '@/components/ui/editable-table';
 import Link from 'next/link';
+import { formatDate } from '@/lib/utils';
 
 type Revenue = {
   id: string;
@@ -35,7 +36,7 @@ export function RevenueTable({
       header: 'Date',
       type: 'date',
       width: 'w-[130px]',
-      render: (row) => new Date(row.revenueDate).toLocaleDateString(),
+      render: (row) => formatDate(row.revenueDate),
     },
   ];
 

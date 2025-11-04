@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { EditableTable, Column } from '@/components/ui/editable-table';
 import Link from 'next/link';
+import { formatDate } from '@/lib/utils';
 
 type Expense = {
   id: string;
@@ -40,7 +41,7 @@ export function ExpenseTable({
       header: 'Date',
       type: 'date',
       width: 'w-[130px]',
-      render: (row) => new Date(row.expenseDate).toLocaleDateString(),
+      render: (row) => formatDate(row.expenseDate),
     },
     {
       key: 'description',
