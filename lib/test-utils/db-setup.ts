@@ -85,6 +85,7 @@ export async function createTestUser() {
  * Based on the cash basis accounting rules
  */
 export async function seedTestAccounts() {
+  // Use upsert to avoid duplicate key errors
   const accounts = [
     // ASSETS (1xxx)
     {
@@ -196,8 +197,10 @@ export async function seedTestAccounts() {
   ];
 
   for (const account of accounts) {
-    await prisma.chartOfAccount.create({
-      data: account,
+    await prisma.chartOfAccount.upsert({
+      where: { code: account.code },
+      update: account,
+      create: account,
     });
   }
 }

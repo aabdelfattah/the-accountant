@@ -27,6 +27,8 @@ const customJestConfig = {
   ],
   // Increase timeout for database operations
   testTimeout: 30000,
+  // Run tests serially to avoid database conflicts
+  maxWorkers: 1,
 }
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
