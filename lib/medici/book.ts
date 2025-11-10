@@ -97,6 +97,44 @@ export async function getAccountLedger(
 }
 
 /**
+ * Get all ledger entries across all accounts
+ *
+ * @param startDate - Optional start date
+ * @param endDate - Optional end date
+ * @returns Array of all ledger entries
+ */
+export async function getAllLedgerEntries(startDate?: Date, endDate?: Date) {
+  // Connect to database
+  await connectDb();
+
+  // Import mongoose models
+  const mongoose = (await import('mongoose')).default;
+
+  // Query the medici_transactions collection directly
+  const query: Record<string, unknown> = { book: DEFAULT_BOOK };
+
+  if (startDate || endDate) {
+    const dateQuery: Record<string, Date> = {};
+    if (startDate) dateQuery.$gte = startDate;
+    if (endDate) dateQuery.$lte = endDate;
+    query.datetime = dateQuery;
+  }
+
+  const db = mongoose.connection.db;
+  if (!db) {
+    throw new Error('Database connection not established');
+  }
+
+  const transactions = await db
+    .collection('medici_transactions')
+    .find(query)
+    .sort({ datetime: -1 })
+    .toArray();
+
+  return transactions;
+}
+
+/**
  * Void a journal entry (creates reversal entry)
  *
  * @param journalId - Medici journal _id

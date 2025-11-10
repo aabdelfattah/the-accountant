@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/table';
 import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
-import { getBook } from '@/lib/medici/book';
+import { getAllLedgerEntries } from '@/lib/medici/book';
 import { formatDistanceToNow } from 'date-fns';
 
 export default async function JournalPage() {
@@ -20,12 +20,8 @@ export default async function JournalPage() {
     redirect('/dashboard');
   }
 
-  // Fetch journal entries from Medici
-  const book = await getBook();
-
-  // Query all transactions and group by journal
-  const ledgerData = await book.ledger({});
-  const entries = ledgerData.results || [];
+  // Fetch all journal entries from Medici
+  const entries = await getAllLedgerEntries();
 
   // Group by journal entry
   type JournalEntry = {
@@ -35,33 +31,41 @@ export default async function JournalPage() {
     lines: Array<{ account: string; debit: number; credit: number }>;
   };
 
-  type LedgerEntry = {
+  type MediciTransaction = {
+    _id: string;
     memo: string;
     datetime: Date;
     account_path: string[];
-    debit?: number;
     credit?: number;
+    debit?: number;
+    book: string;
+    approved: boolean;
+    timestamp: Date;
+    voided: boolean;
+    void_reason?: string;
   };
 
   const journalMap = new Map<string, JournalEntry>();
 
-  entries.forEach((entry: LedgerEntry) => {
+  entries.forEach((entry: unknown) => {
+    const transaction = entry as MediciTransaction;
+
     // Use memo + datetime as grouping key since we don't have direct journal ID
-    const key = `${entry.memo}_${entry.datetime.getTime()}`;
+    const key = `${transaction.memo}_${new Date(transaction.datetime).getTime()}`;
 
     if (!journalMap.has(key)) {
       journalMap.set(key, {
         id: key,
-        date: entry.datetime,
-        memo: entry.memo,
+        date: new Date(transaction.datetime),
+        memo: transaction.memo,
         lines: [],
       });
     }
 
     journalMap.get(key)!.lines.push({
-      account: entry.account_path.join(':'),
-      debit: entry.debit || 0,
-      credit: entry.credit || 0,
+      account: transaction.account_path.join(':'),
+      debit: transaction.debit || 0,
+      credit: transaction.credit || 0,
     });
   });
 
