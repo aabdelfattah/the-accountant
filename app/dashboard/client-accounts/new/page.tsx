@@ -34,7 +34,6 @@ export default function NewClientAccountPage() {
 
   const [formData, setFormData] = useState({
     name: '',
-    clientName: '',
     clientId: '',
     description: '',
     status: 'ACTIVE',
@@ -68,11 +67,26 @@ export default function NewClientAccountPage() {
     setError('');
 
     try {
+      // Validate that client is selected
+      if (!formData.clientId) {
+        setError('Please select a client');
+        setLoading(false);
+        return;
+      }
+
+      // Get client name from selected client
+      const selectedClient = clients.find((c) => c.id === formData.clientId);
+      if (!selectedClient) {
+        setError('Selected client not found');
+        setLoading(false);
+        return;
+      }
+
       // Filter out empty optional fields
       const payload = {
         name: formData.name,
-        clientName: formData.clientName,
-        ...(formData.clientId && { clientId: formData.clientId }),
+        clientName: selectedClient.name,
+        clientId: formData.clientId,
         ...(formData.description && { description: formData.description }),
         status: formData.status,
         ...(formData.startDate && { startDate: formData.startDate }),
@@ -102,13 +116,11 @@ export default function NewClientAccountPage() {
     }
   };
 
-  // Auto-fill client name when client is selected
+  // Handle client selection
   const handleClientSelect = (clientId: string) => {
-    const selectedClient = clients.find((c) => c.id === clientId);
     setFormData({
       ...formData,
       clientId,
-      clientName: selectedClient?.name || formData.clientName,
     });
   };
 
@@ -181,49 +193,50 @@ export default function NewClientAccountPage() {
 
                 <div className="grid grid-cols-[140px_1fr] gap-4 items-start">
                   <label className="text-sm font-medium pt-2">
-                    Existing Client
+                    Select Client <span className="text-red-500">*</span>
                   </label>
                   <div className="space-y-1.5">
                     <Select
                       value={formData.clientId}
                       onValueChange={handleClientSelect}
                       disabled={loadingClients}
+                      required
                     >
-                      <SelectTrigger>
+                      <SelectTrigger
+                        className={!formData.clientId ? 'border-red-300' : ''}
+                      >
                         <SelectValue
                           placeholder={
                             loadingClients
                               ? 'Loading clients...'
-                              : 'Choose a client (optional)'
+                              : 'Choose a client'
                           }
                         />
                       </SelectTrigger>
                       <SelectContent>
-                        {clients.map((client) => (
-                          <SelectItem key={client.id} value={client.id}>
-                            {client.name}
-                          </SelectItem>
-                        ))}
+                        {clients.length === 0 ? (
+                          <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                            No clients found
+                          </div>
+                        ) : (
+                          clients.map((client) => (
+                            <SelectItem key={client.id} value={client.id}>
+                              {client.name}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground">
-                      Or enter new client name below
+                      Client must exist before creating an account.{' '}
+                      <Link
+                        href="/dashboard/clients/new"
+                        className="text-blue-600 hover:underline"
+                      >
+                        Create new client
+                      </Link>
                     </p>
                   </div>
-                </div>
-
-                <div className="grid grid-cols-[140px_1fr] gap-4 items-start">
-                  <label className="text-sm font-medium pt-2">
-                    Client Name <span className="text-red-500">*</span>
-                  </label>
-                  <Input
-                    placeholder="e.g., Acme Corporation"
-                    value={formData.clientName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, clientName: e.target.value })
-                    }
-                    required
-                  />
                 </div>
               </div>
 

@@ -18,25 +18,43 @@ const projectSchema = z.object({
 
 // Helper function to find next available account code
 async function getNextAccountCode(parentCode: string): Promise<string> {
+  // Get the base code (e.g., '4000' -> '400', '5000' -> '500')
+  const baseCode = parentCode.substring(0, parentCode.length - 1);
+
   const accounts = await prisma.chartOfAccount.findMany({
     where: {
-      code: {
-        startsWith: parentCode,
-      },
+      AND: [
+        {
+          code: {
+            startsWith: baseCode,
+          },
+        },
+        {
+          code: {
+            not: parentCode, // Exclude the parent account itself
+          },
+        },
+      ],
     },
     orderBy: {
       code: 'desc',
     },
-    take: 1,
   });
 
-  if (accounts.length === 0) {
-    return `${parentCode}1`;
+  // Filter to only get codes of the same length (4 digits)
+  const sameLengthAccounts = accounts.filter(
+    (acc) => acc.code.length === parentCode.length
+  );
+
+  if (sameLengthAccounts.length === 0) {
+    // First sub-account: 4000 -> 4001, 5000 -> 5001
+    const baseNum = parseInt(parentCode);
+    return `${baseNum + 1}`;
   }
 
-  const lastCode = accounts[0].code;
-  const suffix = parseInt(lastCode.substring(parentCode.length)) || 0;
-  return `${parentCode}${suffix + 1}`;
+  const lastCode = sameLengthAccounts[0].code;
+  const nextNum = parseInt(lastCode) + 1;
+  return `${nextNum}`;
 }
 
 // GET /api/client-accounts - List all projects
@@ -141,6 +159,20 @@ export async function POST(request: NextRequest) {
     }
 
     const data = validation.data;
+
+    // Verify user exists (important after database reseeds)
+    const userExists = await prisma.user.findUnique({
+      where: { id: session.user.id },
+    });
+
+    if (!userExists) {
+      return NextResponse.json(
+        {
+          error: 'User session is invalid. Please log out and log back in.',
+        },
+        { status: 401 }
+      );
+    }
 
     let revenueAccountId: string | undefined;
     let cogsAccountId: string | undefined;
@@ -261,8 +293,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(project, { status: 201 });
   } catch (error) {
     console.error('Create project error:', error);
+    // Log the full error details for debugging
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
     return NextResponse.json(
-      { error: 'Failed to create project' },
+      {
+        error: 'Failed to create project',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
     );
   }
