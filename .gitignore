@@ -42,3 +42,5 @@ next-env.d.ts
 # business-sensitive data
 accounts.json
 accounts.md
+TESTING_GUIDE.md
+accounts-full-backup.json

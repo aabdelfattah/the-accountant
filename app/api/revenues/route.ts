@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { processRevenuePaid } from '@/lib/accounting/processors/revenue-processor';
 
 // Validation schema for revenue creation
 const createRevenueSchema = z.object({
@@ -167,7 +168,50 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // TODO: In Phase 11, we'll auto-generate journal entries here
+    // Auto-generate journal entry if revenue is created as PAID (cash basis accounting)
+    if (data.paymentStatus === 'PAID') {
+      const result = await processRevenuePaid(revenue);
+
+      if (!result.success) {
+        // Log error but don't fail the creation
+        console.error('Failed to create journal entry:', result.error);
+        return NextResponse.json(
+          {
+            ...revenue,
+            journalEntryWarning: `Revenue created but journal entry creation failed: ${result.error}`,
+          },
+          { status: 201 }
+        );
+      }
+
+      console.log('Journal entry created:', result.mediciJournalId);
+
+      // Fetch updated revenue with journal entry
+      const updatedRevenue = await prisma.revenue.findUnique({
+        where: { id: revenue.id },
+        include: {
+          project: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          journalEntry: {
+            include: {
+              lines: {
+                include: {
+                  account: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      return NextResponse.json(updatedRevenue, { status: 201 });
+    }
 
     return NextResponse.json(revenue, { status: 201 });
   } catch (error) {

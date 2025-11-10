@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { processRevenuePaid } from '@/lib/accounting/processors/revenue-processor';
 
 // Validation schema for revenue update
 const updateRevenueSchema = z.object({
@@ -156,6 +157,10 @@ export async function PATCH(
       updateData.convertedAmount = amount * exchangeRate;
     }
 
+    // Detect if payment status is changing to PAID
+    const statusChangingToPaid =
+      data.paymentStatus === 'PAID' && existingRevenue.paymentStatus !== 'PAID';
+
     // Update revenue
     const revenue = await prisma.revenue.update({
       where: { id: params.id },
@@ -172,7 +177,48 @@ export async function PATCH(
       },
     });
 
-    // TODO: In Phase 11, update journal entries if payment status changed
+    // Auto-generate journal entry if status changed to PAID (cash basis accounting)
+    if (statusChangingToPaid) {
+      const result = await processRevenuePaid(revenue);
+
+      if (!result.success) {
+        // Log error but don't fail the update
+        console.error('Failed to create journal entry:', result.error);
+        // You might want to return this info to the user
+        return NextResponse.json({
+          ...revenue,
+          journalEntryWarning: `Revenue updated but journal entry creation failed: ${result.error}`,
+        });
+      }
+
+      console.log('Journal entry created:', result.mediciJournalId);
+
+      // Fetch updated revenue with journal entry
+      const updatedRevenue = await prisma.revenue.findUnique({
+        where: { id: params.id },
+        include: {
+          project: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          journalEntry: {
+            include: {
+              lines: {
+                include: {
+                  account: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      return NextResponse.json(updatedRevenue);
+    }
 
     return NextResponse.json(revenue);
   } catch (error) {

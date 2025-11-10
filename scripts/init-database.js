@@ -36,7 +36,9 @@ async function initDatabase() {
 
   if (!DATABASE_URL) {
     console.error('❌ ERROR: DATABASE_URL environment variable is not set');
-    console.error('   Please set DATABASE_URL in your .env file or environment');
+    console.error(
+      '   Please set DATABASE_URL in your .env file or environment'
+    );
     process.exit(1);
   }
 
@@ -59,7 +61,7 @@ async function initDatabase() {
         {
           unique: true,
           sparse: true,
-          name: 'revenues_journalEntryId_sparse_unique'
+          name: 'revenues_journalEntryId_sparse_unique',
         }
       );
       console.log('   ✓ Created successfully');
@@ -79,7 +81,7 @@ async function initDatabase() {
         {
           unique: true,
           sparse: true,
-          name: 'expenses_journalEntryId_sparse_unique'
+          name: 'expenses_journalEntryId_sparse_unique',
         }
       );
       console.log('   ✓ Created successfully');
@@ -96,7 +98,7 @@ async function initDatabase() {
 
     console.log('   Revenues indexes:');
     const revenueIndexes = await db.collection('revenues').indexes();
-    revenueIndexes.forEach(idx => {
+    revenueIndexes.forEach((idx) => {
       const flags = [];
       if (idx.unique) flags.push('unique');
       if (idx.sparse) flags.push('sparse');
@@ -106,7 +108,7 @@ async function initDatabase() {
 
     console.log('\n   Expenses indexes:');
     const expenseIndexes = await db.collection('expenses').indexes();
-    expenseIndexes.forEach(idx => {
+    expenseIndexes.forEach((idx) => {
       const flags = [];
       if (idx.unique) flags.push('unique');
       if (idx.sparse) flags.push('sparse');
@@ -115,17 +117,24 @@ async function initDatabase() {
     });
 
     // Show current data stats
-    const nullRevenues = await db.collection('revenues').countDocuments({ journalEntryId: null });
-    const paidRevenues = await db.collection('revenues').countDocuments({ journalEntryId: { $ne: null } });
-    const nullExpenses = await db.collection('expenses').countDocuments({ journalEntryId: null });
-    const paidExpenses = await db.collection('expenses').countDocuments({ journalEntryId: { $ne: null } });
+    const nullRevenues = await db
+      .collection('revenues')
+      .countDocuments({ journalEntryId: null });
+    const paidRevenues = await db
+      .collection('revenues')
+      .countDocuments({ journalEntryId: { $ne: null } });
+    const nullExpenses = await db
+      .collection('expenses')
+      .countDocuments({ journalEntryId: null });
+    const paidExpenses = await db
+      .collection('expenses')
+      .countDocuments({ journalEntryId: { $ne: null } });
 
     console.log('\n📊 Current data:');
     console.log(`   Revenues: ${paidRevenues} paid, ${nullRevenues} unpaid`);
     console.log(`   Expenses: ${paidExpenses} paid, ${nullExpenses} unpaid`);
 
     console.log('\n✅ Database initialization complete!\n');
-
   } catch (error) {
     console.error('\n❌ Error initializing database:', error.message);
     console.error(error);
