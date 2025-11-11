@@ -4,6 +4,25 @@ import { useRouter } from 'next/navigation';
 import { EditableTable, Column } from '@/components/ui/editable-table';
 import Link from 'next/link';
 import { formatDate } from '@/lib/utils';
+import { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 type Revenue = {
   id: string;
@@ -13,6 +32,8 @@ type Revenue = {
   currency: string;
   convertedAmount: number;
   paymentStatus: string;
+  bankAccount?: string | null;
+  paymentDate?: Date | null;
   project?: {
     id: string;
     name: string;
@@ -29,6 +50,11 @@ export function RevenueTable({
   variant = 'full',
 }: RevenueTableProps) {
   const router = useRouter();
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [selectedRevenue, setSelectedRevenue] = useState<Revenue | null>(null);
+  const [paymentDate, setPaymentDate] = useState<string>('');
+  const [bankAccount, setBankAccount] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const baseColumns: Column<Revenue>[] = [
     {
@@ -41,8 +67,8 @@ export function RevenueTable({
   ];
 
   const projectColumn: Column<Revenue> = {
-    key: 'project',
-    header: 'Project',
+    key: 'projectName',
+    header: 'Client Account',
     type: 'readonly',
     render: (row) =>
       row.project ? (
@@ -118,6 +144,23 @@ export function RevenueTable({
       : [...baseColumns, ...detailColumns];
 
   const handleSave = async (id: string, updatedData: Partial<Revenue>) => {
+    // If changing status to PAID, show dialog to collect payment details
+    if (
+      updatedData.paymentStatus === 'PAID' &&
+      revenues.find((r) => r.id === id)?.paymentStatus !== 'PAID'
+    ) {
+      const revenue = revenues.find((r) => r.id === id);
+      if (revenue) {
+        setSelectedRevenue(revenue);
+        // Pre-fill payment date with today
+        setPaymentDate(new Date().toISOString().split('T')[0]);
+        // Pre-fill bank account if already set
+        setBankAccount(revenue.bankAccount || '');
+        setPaymentDialogOpen(true);
+        return; // Don't save yet, wait for dialog
+      }
+    }
+
     try {
       const response = await fetch(`/api/revenues/${id}`, {
         method: 'PATCH',
@@ -128,7 +171,14 @@ export function RevenueTable({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update revenue');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update revenue');
+      }
+
+      // Check if there was a journal entry warning
+      const result = await response.json();
+      if (result.journalEntryWarning) {
+        alert(result.journalEntryWarning);
       }
 
       // Refresh the page to show updated data
@@ -139,15 +189,122 @@ export function RevenueTable({
     }
   };
 
-  return (
-    <EditableTable
-      data={revenues}
-      columns={columns}
-      onSave={handleSave}
-      emptyMessage="No revenues found"
-      rowClassName={(row) =>
-        `hover:bg-muted/50 ${row.paymentStatus === 'PAID' ? '' : ''}`
+  const handlePaymentSubmit = async () => {
+    if (!selectedRevenue || !paymentDate || !bankAccount) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(`/api/revenues/${selectedRevenue.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          paymentStatus: 'PAID',
+          paymentDate,
+          bankAccount,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update revenue');
       }
-    />
+
+      // Check if there was a journal entry warning
+      const result = await response.json();
+      if (result.journalEntryWarning) {
+        alert(result.journalEntryWarning);
+      }
+
+      // Close dialog and refresh
+      setPaymentDialogOpen(false);
+      setSelectedRevenue(null);
+      router.refresh();
+    } catch (error) {
+      console.error('Error updating payment:', error);
+      alert(
+        error instanceof Error ? error.message : 'Failed to update payment'
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <>
+      <EditableTable
+        data={revenues}
+        columns={columns}
+        onSave={handleSave}
+        emptyMessage="No revenues found"
+        rowClassName={(row) =>
+          `hover:bg-muted/50 ${row.paymentStatus === 'PAID' ? '' : ''}`
+        }
+      />
+
+      {/* Payment Details Dialog */}
+      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Payment Details Required</DialogTitle>
+            <DialogDescription>
+              To mark this revenue as PAID and create a journal entry, please
+              provide the payment details.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="paymentDate">
+                Payment Date <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="paymentDate"
+                type="date"
+                value={paymentDate}
+                onChange={(e) => setPaymentDate(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="bankAccount">
+                Bank Account <span className="text-red-500">*</span>
+              </Label>
+              <Select value={bankAccount} onValueChange={setBankAccount}>
+                <SelectTrigger id="bankAccount">
+                  <SelectValue placeholder="Select bank account" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1001">PayPal</SelectItem>
+                  <SelectItem value="1003">Bank Account</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground">
+                Select where the payment was received
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setPaymentDialogOpen(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handlePaymentSubmit} disabled={isSubmitting}>
+              {isSubmitting ? 'Updating...' : 'Mark as Paid'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

@@ -28,6 +28,8 @@ export async function processRevenuePaid(
   revenue: Revenue
 ): Promise<ProcessRevenueResult> {
   try {
+    console.log('[Revenue Processor] Processing revenue:', revenue.id);
+
     // Verify revenue is actually PAID
     if (revenue.paymentStatus !== 'PAID') {
       return {
@@ -51,6 +53,10 @@ export async function processRevenuePaid(
         error: 'Bank account is required for PAID revenue',
       };
     }
+
+    console.log(
+      '[Revenue Processor] Validation passed, creating journal entry...'
+    );
 
     // Determine which rule to use based on whether there are transaction fees
     const hasFees = revenue.taxAmount && revenue.taxAmount > 0;

@@ -54,20 +54,33 @@ export async function createEntry(params: {
 }) {
   const { memo, date, transactions } = params;
 
-  const entry = await createJournalEntry(memo, date);
+  console.log('[Medici Service] Creating journal entry...');
 
-  // Add all transactions
-  for (const txn of transactions) {
-    const accountPath = await getAccountPath(txn.accountCode);
+  try {
+    const entry = await createJournalEntry(memo, date);
+    console.log(
+      '[Medici Service] Entry object created, adding transactions...'
+    );
 
-    if (txn.type === 'debit') {
-      entry.debit(accountPath, txn.amount);
-    } else {
-      entry.credit(accountPath, txn.amount);
+    // Add all transactions
+    for (const txn of transactions) {
+      const accountPath = await getAccountPath(txn.accountCode);
+
+      if (txn.type === 'debit') {
+        entry.debit(accountPath, txn.amount);
+      } else {
+        entry.credit(accountPath, txn.amount);
+      }
     }
-  }
 
-  return entry.commit();
+    console.log('[Medici Service] Committing entry...');
+    const result = await entry.commit();
+    console.log('[Medici Service] Entry committed successfully');
+    return result;
+  } catch (error) {
+    console.error('[Medici Service] Error details:', error);
+    throw error;
+  }
 }
 
 /**

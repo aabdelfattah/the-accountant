@@ -7,21 +7,42 @@
  * Learn more: https://github.com/flash-oss/medici
  */
 
-import { Book } from 'medici';
 import { connectDb } from '../db';
+import type { Book as BookType } from 'medici';
 
 // Default book name for all journal entries
 export const DEFAULT_BOOK = 'Main';
 
+// Cache the Book class after first dynamic import
+let BookClass: typeof BookType | null = null;
+
 /**
  * Get a Medici book instance
- * Ensures database is connected before returning
+ *
+ * CRITICAL FIX: Uses dynamic import() instead of static import
+ * - Static import: `import { Book } from 'medici'` runs BEFORE mongoose connects
+ * - Dynamic import: `await import('medici')` runs AFTER mongoose connects
+ *
+ * This ensures Medici's models are created with an active mongoose connection
  */
-export async function getBook(bookName: string = DEFAULT_BOOK) {
-  // Ensure Mongoose is connected
+export async function getBook(
+  bookName: string = DEFAULT_BOOK
+): Promise<BookType> {
+  // Step 1: Ensure Mongoose is connected
   await connectDb();
 
-  return new Book(bookName);
+  // Step 2: Load Medici AFTER connection (only once, then cache)
+  if (!BookClass) {
+    console.log(
+      '[Medici] Dynamically importing Book class after connection...'
+    );
+    const medici = await import('medici');
+    BookClass = medici.Book;
+    console.log('[Medici] Book class loaded successfully');
+  }
+
+  // Step 3: Create and return new Book instance
+  return new BookClass(bookName);
 }
 
 /**

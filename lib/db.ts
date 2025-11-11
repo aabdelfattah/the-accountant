@@ -34,6 +34,7 @@ function getDatabaseUrl(): string {
 
 // Track connection state
 let isMongooseConnected = false;
+let connectionPromise: Promise<void> | null = null;
 
 /**
  * Initialize Mongoose connection for Medici
@@ -42,24 +43,40 @@ let isMongooseConnected = false;
 export async function connectDb() {
   // Prisma connects automatically, no action needed
 
-  // Connect Mongoose for Medici
-  if (!isMongooseConnected) {
-    try {
-      const dbUrl = getDatabaseUrl();
+  // Connect Mongoose for Medici - use singleton pattern to avoid race conditions
+  if (!isMongooseConnected && !connectionPromise) {
+    connectionPromise = (async () => {
+      try {
+        const dbUrl = getDatabaseUrl();
 
-      if (!dbUrl) {
-        throw new Error('DATABASE_URL is not defined');
+        if (!dbUrl) {
+          throw new Error('DATABASE_URL is not defined');
+        }
+
+        console.log('[Mongoose] Connecting to MongoDB...');
+        mongoose.set('strictQuery', false);
+
+        await mongoose.connect(dbUrl, {
+          bufferCommands: false,
+          serverSelectionTimeoutMS: 10000,
+        });
+
+        isMongooseConnected = true;
+        console.log(
+          '[Mongoose] Connected successfully, readyState:',
+          mongoose.connection.readyState
+        );
+      } catch (error) {
+        console.error('[Mongoose] Connection error:', error);
+        connectionPromise = null; // Reset to allow retry
+        throw error;
       }
+    })();
+  }
 
-      await mongoose.connect(dbUrl, {
-        bufferCommands: false,
-      });
-
-      isMongooseConnected = true;
-    } catch (error) {
-      console.error('Mongoose connection error:', error);
-      throw error;
-    }
+  // Wait for connection to complete (handles concurrent calls)
+  if (connectionPromise) {
+    await connectionPromise;
   }
 }
 
